@@ -6,7 +6,10 @@ export async function GET() {
     const { userId } = await auth();
 
     if (!userId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const user = await db.user.findUnique({
@@ -16,7 +19,10 @@ export async function GET() {
     });
 
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     const conversations = await db.conversation.findMany({
@@ -32,12 +38,15 @@ export async function GET() {
     });
 
     return Response.json({
-      conversations: Array.isArray(conversations) ? conversations : [],
+      conversations,
     });
   } catch (error) {
     console.error("GET conversations error:", error);
+
     return Response.json(
-      { conversations: [], error: "Failed to fetch conversations" },
+      {
+        error: "Failed to fetch conversations",
+      },
       { status: 500 }
     );
   }
@@ -48,7 +57,10 @@ export async function POST(request) {
     const { userId } = await auth();
 
     if (!userId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const user = await db.user.findUnique({
@@ -58,10 +70,14 @@ export async function POST(request) {
     });
 
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     const body = await request.json();
+
     const { title, firstMessage } = body;
 
     const conversation = await db.conversation.create({
@@ -87,8 +103,11 @@ export async function POST(request) {
     return Response.json(conversation);
   } catch (error) {
     console.error("POST conversation error:", error);
+
     return Response.json(
-      { error: "Failed to create conversation" },
+      {
+        error: "Failed to create conversation",
+      },
       { status: 500 }
     );
   }
@@ -99,7 +118,10 @@ export async function DELETE() {
     const { userId } = await auth();
 
     if (!userId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const user = await db.user.findUnique({
@@ -109,7 +131,10 @@ export async function DELETE() {
     });
 
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     await db.conversation.deleteMany({
@@ -118,11 +143,16 @@ export async function DELETE() {
       },
     });
 
-    return Response.json({ success: true });
+    return Response.json({
+      success: true,
+    });
   } catch (error) {
     console.error("DELETE conversations error:", error);
+
     return Response.json(
-      { error: "Failed to clear conversations" },
+      {
+        error: "Failed to clear conversations",
+      },
       { status: 500 }
     );
   }

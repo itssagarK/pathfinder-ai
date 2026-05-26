@@ -52,14 +52,15 @@ export async function POST(request, context) {
       },
     });
 
-    await db.conversation.update({
-      where: {
-        id: params.id,
-      },
-      data: {
-        updatedAt: new Date(),
-      },
-    });
+    await db.conversation.updateMany({
+   where: {
+    id: params.id,
+    userId: user.id,
+  },
+  data: {
+    updatedAt: new Date(),
+  },
+});
 
     return Response.json(message);
   } catch (error) {

@@ -158,7 +158,7 @@ export async function getCoverLetter(id) {
 }
 
 /**
- * Deletes a specific cover letter record (ownership-checked).
+ *Deletes a specific cover letter record with strict ownership validation.
  */
 export async function deleteCoverLetter(id) {
   const { userId } = await auth();
@@ -169,10 +169,10 @@ export async function deleteCoverLetter(id) {
   });
   if (!user) throw new Error("User not found");
 
-  return db.coverLetter.delete({
-    where: {
-      id,
-      userId: user.id,
-    },
-  });
+ return db.coverLetter.deleteMany({
+  where: {
+    id,
+    userId: user.id,
+  },
+});
 }

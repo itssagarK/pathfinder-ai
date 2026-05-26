@@ -153,15 +153,15 @@ export async function POST(request) {
           content: prompt,
         },
       });
-
-      await db.conversation.update({
-        where: {
-          id: conversationId,
-        },
-        data: {
-          updatedAt: new Date(),
-        },
-      });
+await db.conversation.updateMany({
+  where: {
+    id: conversationId,
+    userId: user.id,
+  },
+  data: {
+    updatedAt: new Date(),
+  },
+});
     }
   }
 
@@ -233,14 +233,15 @@ Rules:
               },
             });
 
-            await db.conversation.update({
-              where: {
-                id: conversationId,
-              },
-              data: {
-                updatedAt: new Date(),
-              },
-            });
+           await db.conversation.updateMany({
+  where: {
+    id: conversationId,
+    userId: user.id,
+  },
+  data: {
+    updatedAt: new Date(),
+  },
+});
           }
         }
 

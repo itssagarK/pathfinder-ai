@@ -125,7 +125,7 @@ export async function getATSAnalyses() {
 }
 
 /**
- * Deletes a specific ATS analysis record (ownership-checked).
+ * Deletes a specific ATS analysis record with strict ownership validation.
  */
 export async function deleteATSAnalysis(id) {
   try {
@@ -155,7 +155,12 @@ export async function deleteATSAnalysis(id) {
       return { success: false, errors: { _form: ["Unauthorized: you do not own this analysis."] } };
     }
 
-    await db.atsAnalysis.delete({ where: { id: existing.id } });
+   await db.atsAnalysis.deleteMany({
+  where: {
+    id: existing.id,
+    userId: user.id,
+  },
+});
 
     revalidatePath("/ats-analyzer");
     return { success: true };
