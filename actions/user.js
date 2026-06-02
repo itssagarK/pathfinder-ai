@@ -49,12 +49,10 @@ export async function updateUser(data) {
         });
 
         if (!industryInsight) {
-          const insights = precomputedInsights ?? (await generateAIInsights(data.industry, data));
-
           industryInsight = await tx.industryInsight.create({
             data: {
               industry: data.industry,
-              ...insights,
+              ...precomputedInsights,
               nextUpdate: getIndustryInsightRefreshTime(),
             },
           });
