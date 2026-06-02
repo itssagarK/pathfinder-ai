@@ -37,7 +37,11 @@ function normalizeSettingsInput(data) {
 }
 
 export async function getUserSettings(userId) {
-  if (!userId) return null;
+  const { userId: authenticatedUserId } = await auth();
+
+  if (!authenticatedUserId || authenticatedUserId !== userId) {
+    throw new Error("Unauthorized");
+  }
 
   try {
     const user = await getUserByClerkId(userId);
