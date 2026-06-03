@@ -1,15 +1,31 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { db } from "@/lib/prisma";
 import { generateGeminiContent } from "@/lib/gemini";
 import { buildSecurePrompt } from "@/lib/prompt-safety";
 import { buildUserProfileContext } from "@/lib/ai-context";
+import { enforceRateLimit, getRateLimitIdentifier } from "@/lib/rate-limit";
 
 export async function chatWithGemini(prompt) {
   if (!prompt) throw new Error("Prompt is required");
 
   const { userId } = await auth();
+  const headerList = await headers();
+
+  const subject = getRateLimitIdentifier({ headers: headerList }, userId);
+  const rateLimit = await enforceRateLimit({
+    endpoint: "action:chatWithGemini",
+    subject,
+    limitPerMinute: userId ? 20 : 5,
+    burstCapacity: userId ? 10 : 5,
+  });
+
+  if (!rateLimit.allowed) {
+    throw new Error(`Rate limit exceeded. Please try again in ${rateLimit.retryAfterSeconds} seconds.`);
+  }
+
   const user = userId
     ? await db.user.findUnique({
         where: { clerkUserId: userId },
