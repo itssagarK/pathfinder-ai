@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { generateGeminiContentStream } from "@/lib/gemini";
 import { db } from "@/lib/prisma";
+import { isFeatureEnabled } from "@/lib/ai-gating";
 import { buildSecurePrompt } from "@/lib/prompt-safety";
 import { buildUserAiContext } from "@/lib/ai-context";
 import { chatPromptSchema as chatPromptSchemaStr } from "@/lib/schemas/chat";
@@ -121,9 +122,7 @@ export async function POST(request) {
     return respondSseError(request, ERROR_CODES.UNAUTHORIZED);
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
+  if (!isFeatureEnabled("chat")) {
     return respondError(ERROR_CODES.INTERNAL_SERVER_ERROR, "GEMINI_API_KEY is not configured");
   }
 

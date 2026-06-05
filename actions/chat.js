@@ -19,8 +19,6 @@ export async function chatWithGemini(prompt) {
 
   const authResult = await auth();
   const userId = authResult?.userId;
-
-  const { userId } = await auth();
   const headerList = await headers();
 
   const subject = getRateLimitIdentifier({ headers: headerList }, userId);

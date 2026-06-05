@@ -3,6 +3,7 @@
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { isFeatureEnabled } from "@/lib/ai-gating";
 import { ATS_ANALYSIS_CACHE_TTL_MS, cachedGenerateGeminiContent, generateCacheKey } from "@/lib/cache";
 import { buildSecurePrompt } from "@/lib/prompt-safety";
 import { buildUserProfileContext } from "@/lib/ai-context";
@@ -16,6 +17,10 @@ import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
  */
 export async function analyzeATS(rawParams) {
   try {
+    if (!isFeatureEnabled("ats")) {
+      return { success: false, errors: { _form: ["ATS analysis feature is currently disabled (missing configuration)."] } };
+    }
+
     const { userId } = await auth();
 
     if (!userId) {

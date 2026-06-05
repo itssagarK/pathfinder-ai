@@ -20,6 +20,10 @@ vi.mock("@/lib/prisma", () => ({
     atsAnalysis: {
       create: mocks.create,
     },
+    aiRateLimit: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn().mockResolvedValue({}),
+    },
   },
 }));
 

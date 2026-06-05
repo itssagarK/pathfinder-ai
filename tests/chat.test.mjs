@@ -60,8 +60,6 @@ describe("chatWithGemini", () => {
     mocks.enforceRateLimit.mockResolvedValue({ allowed: true, remaining: 10, retryAfterSeconds: 0 });
   });
 
-  it("requires a prompt", async () => {
-    await expect(chatWithGemini("")).rejects.toThrow("Prompt is required");
   it("returns validation errors for an empty prompt", async () => {
     await expect(chatWithGemini("")).resolves.toEqual(
       expect.objectContaining({
