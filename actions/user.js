@@ -80,7 +80,7 @@ export async function updateUser(data) {
             careerGoals: profileData.careerGoals ?? null,
             experience: profileData.experience ?? null,
             bio: profileData.bio ?? null,
-            skills: profileData.skills ?? null,
+            skills: profileData.skills ?? [],
           },
         });
 

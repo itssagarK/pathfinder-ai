@@ -33,7 +33,7 @@ export default function RootLayout(props) {
     <ClerkProvider
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/onboarding"
+      signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/onboarding"
       afterSignOutUrl="/"
     >
