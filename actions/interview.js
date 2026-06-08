@@ -113,7 +113,7 @@ Return ONLY a valid JSON object matching this schema. Do not output any markdown
 /**
  * Saves a quiz result and generates AI-powered feedback if mistakes were made.
  */
-export async function saveQuizResult(questions, answers, category = "Technical") {
+export async function saveQuizResult(questions, answers, score, category = "Technical") {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   
@@ -122,12 +122,13 @@ export async function saveQuizResult(questions, answers, category = "Technical")
     throw new Error(`Quiz feedback limit reached. Resets in ${formatResetTime(feedbackLimit.resetAt)}.`);
   }
 
-  const validation = validateInput(quizResultSaveSchema, { questions, answers, category });
+  const validation = validateInput(quizResultSaveSchema, { questions, answers, score, category });
   if (!validation.success) return { success: false, errors: validation.errors };
 
   const {
     questions: validatedQuestions,
     answers: validatedAnswers,
+    score: validatedScore,
     category: validatedCategory,
   } = validation.data;
 
@@ -136,10 +137,9 @@ export async function saveQuizResult(questions, answers, category = "Technical")
   });
   if (!user) throw new Error("User not found");
 
-  // Map user answers to question outcomes and compute score server-side
+  // Map user answers to question outcomes
   const questionResults = [];
   const wrongAnswers = [];
-  let correctCount = 0;
 
   validatedQuestions.forEach((q, index) => {
     if (!q?.question) return;
@@ -158,16 +158,10 @@ export async function saveQuizResult(questions, answers, category = "Technical")
 
     questionResults.push(mappedQuestion);
 
-    if (isCorrect) {
-      correctCount++;
-    } else {
+    if (!isCorrect) {
       wrongAnswers.push(mappedQuestion);
     }
   });
-
-  const computedScore = validatedQuestions.length > 0
-    ? Math.round((correctCount / validatedQuestions.length) * 100)
-    : 0;
 
   let improvementTip = null;
 
@@ -184,7 +178,7 @@ export async function saveQuizResult(questions, answers, category = "Technical")
       untrustedData: [
         { label: "industry", value: user.industry || "software", maxLength: 200 },
         { label: "category", value: validatedCategory, maxLength: 200 },
-        { label: "score", value: String(computedScore), maxLength: 50 },
+        { label: "score", value: String(validatedScore), maxLength: 50 },
         { label: "wrongAnswers", value: wrongText, maxLength: 4000 },
       ],
     });
@@ -202,7 +196,7 @@ export async function saveQuizResult(questions, answers, category = "Technical")
     const assessment = await db.assessment.create({
       data: {
         userId: user.id,
-        quizScore: computedScore,
+        quizScore: validatedScore,
         questions: questionResults,
         category: validatedCategory,
         improvementTip,
@@ -263,26 +257,24 @@ export async function evaluateVoiceAnswer(question, transcribedAnswer) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const prompt = `You are an expert interview coach evaluating a spoken answer from a candidate.
-Evaluate the transcribed answer based on confidence, filler words, and content quality.
-
-Question: ${question}
-Candidate's spoken answer: ${transcribedAnswer}
-
-Provide feedback in JSON format ONLY:
+  const prompt = buildSecurePrompt({
+  context: "You are an expert interview coach evaluating a spoken answer from a candidate.",
+  task: "Evaluate the transcribed answer based on confidence, filler words, and content quality.",
+  untrustedData: [
+    { label: "question",          value: question,          maxLength: 1000 },
+    { label: "transcribedAnswer", value: transcribedAnswer, maxLength: 3000 },
+  ],
+  outputRules: `Provide feedback in JSON format ONLY. Do not output any markdown code fences or extra text:
 {
   "score": 85,
   "fillerWordsCount": 3,
   "confidence": "High",
   "feedback": "Your answer was very structured, but you used 'um' a few times."
-}`;
-
+}`,
+});
   try {
     const aiResult = await generateGeminiContent(prompt);
     let rawText = aiResult.response.text();
-    if (rawText.startsWith("\`\`\`json")) {
-      rawText = rawText.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
-    }
     const parsed = JSON.parse(rawText);
     return { success: true, data: parsed };
   } catch (error) {
@@ -298,28 +290,28 @@ export async function evaluateVideoAnswer(question, transcribedAnswer, metrics) 
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const prompt = `You are an expert interview coach evaluating a video interview response.
-Evaluate the transcribed answer and the provided facial metrics (e.g., face detected percentage).
 
-Question: ${question}
-Candidate's spoken answer: ${transcribedAnswer}
-Body Language Metrics: ${JSON.stringify(metrics)}
-
-Provide feedback in JSON format ONLY:
+const prompt = buildSecurePrompt({
+  context: "You are an expert interview coach evaluating a video interview response.",
+  task: "Evaluate the transcribed answer and the provided facial metrics (e.g., face detected percentage).",
+  untrustedData: [
+    { label: "question",           value: question,                    maxLength: 1000 },
+    { label: "transcribedAnswer",  value: transcribedAnswer,           maxLength: 3000 },
+    { label: "metrics",            value: JSON.stringify(metrics),     maxLength: 500  },
+  ],
+  outputRules: `Provide feedback in JSON format ONLY. Do not output any markdown code fences or extra text:
 {
   "score": 85,
   "fillerWordsCount": 3,
   "confidence": "High",
   "bodyLanguageFeedback": "You maintained great eye contact and presence.",
   "verbalFeedback": "Your answer was very structured, but you used 'um' a few times."
-}`;
+}`,
+}); 
 
   try {
     const aiResult = await generateGeminiContent(prompt);
     let rawText = aiResult.response.text();
-    if (rawText.startsWith("\`\`\`json")) {
-      rawText = rawText.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
-    }
     const parsed = JSON.parse(rawText);
     return { success: true, data: parsed };
   } catch (error) {
