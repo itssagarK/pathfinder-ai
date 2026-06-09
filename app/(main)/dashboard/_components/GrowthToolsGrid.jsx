@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ScanSearch, Mic, FileText, Mail, Bot, Briefcase, ChevronRight } from "lucide-react";
+import { ScanSearch, Mic, FileText, Mail, Bot, Briefcase, ChevronRight, Compass } from "lucide-react";
 
 const TOOLS = [
   {
@@ -46,6 +46,13 @@ const TOOLS = [
     icon: Briefcase,
     color: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
     href: "/interview",
+  },
+  {
+    name: "Explore Careers",
+    desc: "Discover & Compare",
+    icon: Compass,
+    color: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
+    href: "/explore",
   },
 ];
 

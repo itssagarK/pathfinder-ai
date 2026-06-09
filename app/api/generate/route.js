@@ -29,6 +29,7 @@ import {
 import { respondError, respondSseError, ERROR_CODES } from "@/lib/api/error-handler";
 import { validateInput, validateId } from "@/lib/validate";
 import { chatPromptSchema } from "@/lib/schemas/forms";
+import { getEnv } from "@/lib/env";
 
 const SSE_BASE_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
@@ -130,7 +131,8 @@ export async function OPTIONS(request) {
 }
 
 export async function POST(request) {
-  const isDev = process.env.NODE_ENV !== "production";
+  const env = getEnv();
+  const isDev = env.NODE_ENV !== "production";
 
   const headers = buildSseHeaders(request);
 
@@ -168,8 +170,8 @@ export async function POST(request) {
     return respondSseError(request, ERROR_CODES.UNAUTHORIZED);
   }
 
-  if (!isFeatureEnabled("chat")) {
-    return respondError(ERROR_CODES.INTERNAL_SERVER_ERROR, "GEMINI_API_KEY is not configured");
+ if (!isFeatureEnabled("chat")) {
+    return respondSseError(request, ERROR_CODES.AI_SERVICE_ERROR, "AI service is not configured. Please contact support.");
   }
 
   let prompt;
@@ -321,6 +323,11 @@ export async function POST(request) {
   });
 
   const aiContext = buildUserAiContext(user, recentMessages.reverse());
+<<<<<<< HEAD
+=======
+  const clientIp = request.headers.get("x-real-ip") || "anonymous";
+  cacheUser = userId || clientIp;
+>>>>>>> d7f2f9f (dockerization and production check)
 
   const restrictedPrompt = buildSecurePrompt({
     context: aiContext.context,
@@ -351,7 +358,11 @@ Rules:
     ],
   });
 
+<<<<<<< HEAD
   const restrictedCachedResponse = await getCachedResponse(
+=======
+  existingCachedResponse = await getCachedResponse(
+>>>>>>> d7f2f9f (dockerization and production check)
     cacheUser,
     restrictedPrompt
   );

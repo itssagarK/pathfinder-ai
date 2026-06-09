@@ -56,6 +56,14 @@ model User {
   networkingEmails     NetworkingEmail[]
   projectIdeas         ProjectIdea[]
   resumeGenerations    ResumeGeneration[]
+  starStories          StarStory[]
+  recruiterEmails      RecruiterEmail[]
+  interviewCheatSheets InterviewCheatSheet[]
+  linkedinPosts        LinkedInPost[]
+  offerComparisons     OfferComparison[]
+  careerPivots         CareerPivot[]
+  onboardingPlans      OnboardingPlan[]
+  resignationLetters   ResignationLetter[]
   settings             UserSettings?
 
   exportRecords ExportRecord[]
@@ -148,6 +156,7 @@ model Message {
   role           String
   content        String       @db.Text
   createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([conversationId])
   @@index([conversationId, createdAt])
@@ -325,6 +334,99 @@ model ResumeGeneration {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobDescription String   @db.Text
   content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model StarStory {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawExperience  String   @db.Text
+  starContent    Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model RecruiterEmail {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originalEmail  String   @db.Text
+  goal           String
+  replyContent   String   @db.Text
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model InterviewCheatSheet {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  role           String
+  content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LinkedInPost {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic          String   @db.Text
+  content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OfferComparison {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offers         Json
+  analysis       Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CareerPivot {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentRole    String
+  targetRole     String
+  analysis       Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OnboardingPlan {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  role           String
+  planContent    Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ResignationLetter {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circumstance   String
+  lastDay        String
+  content        String   @db.Text
   createdAt      DateTime @default(now())
 
   @@index([userId])
