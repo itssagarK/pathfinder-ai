@@ -168,8 +168,8 @@ export async function POST(request) {
     return respondSseError(request, ERROR_CODES.UNAUTHORIZED);
   }
 
-  if (!isFeatureEnabled("chat")) {
-    return respondError(ERROR_CODES.INTERNAL_SERVER_ERROR, "GEMINI_API_KEY is not configured");
+ if (!isFeatureEnabled("chat")) {
+    return respondSseError(request, ERROR_CODES.AI_SERVICE_ERROR, "AI service is not configured. Please contact support.");
   }
 
   let prompt;
