@@ -18,7 +18,7 @@ export function ResumeShowcase() {
             <FileText className="h-3 w-3" />
             Resume Builder
           </span>
-          <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
             ATS-Optimized{" "}
             <span className="text-gradient-primary">Resumes</span>
           </h2>
@@ -41,7 +41,7 @@ export function ResumeShowcase() {
               </p>
             </FadeUp>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { label: "ATS Score", value: "94%", color: "text-chart-2", desc: "Passes automated screening" },
                 { label: "Keyword Match", value: "96%", color: "text-chart-1", desc: "Aligned with job descriptions" },

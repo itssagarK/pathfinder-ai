@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, ChevronRight, FileText, Target, Briefcase, Star, LineChart, CheckCircle, TrendingUp, BarChart2, Activity } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronRight, FileText, Target, Star, CheckCircle, TrendingUp, BarChart2, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -14,7 +13,7 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { PricingSection } from "@/components/sections/PricingSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { OpenSourceCommunity } from "@/components/sections/OpenSourceCommunity";
-import { FadeUp, StaggerContainer, StaggerItem, RevealText } from "@/components/motion";
+import { FadeUp, StaggerContainer, StaggerItem } from "@/components/motion";
 import { MagneticButton } from "@/components/motion/magnetic-button";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { features } from "@/data/features";

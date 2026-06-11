@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
-import { ArrowRight, Sparkles, Target, MapPin, FileText, Mic, LayoutDashboard } from "lucide-react";
+import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { Target, MapPin, FileText, Mic, LayoutDashboard, Sparkles } from "lucide-react";
 
 const stages = [
   {
@@ -53,13 +53,12 @@ function GoalStage() {
   }, []);
 
   return (
-    <div className="flex flex-col items-start justify-center min-h-[70vh] py-20 relative z-10">
+    <div className="flex flex-col items-start justify-center w-full relative z-10">
       <motion.div
         initial={{ opacity: 0, x: -40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        onViewportEnter={() => {
+        onAnimationComplete={() => {
           setText("");
           let currentLen = 0;
           const typeInterval = setInterval(() => {
@@ -145,11 +144,10 @@ function RoadmapStage() {
   const pathData = nodePositions.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
 
   return (
-    <div ref={ref} className="flex flex-col items-start justify-center min-h-[70vh] py-20 relative z-10">
+    <div ref={ref} className="flex flex-col items-start justify-center w-full relative z-10">
       <motion.div
         initial={{ opacity: 0, x: -40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-8 w-full max-w-3xl"
       >
@@ -279,11 +277,10 @@ function ResumeStage() {
   });
 
   return (
-    <div ref={ref} className="flex flex-col items-start justify-center min-h-[70vh] py-20 relative z-10">
+    <div ref={ref} className="flex flex-col items-start justify-center w-full relative z-10">
       <motion.div
         initial={{ opacity: 0, x: -40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-8 w-full max-w-3xl"
       >
@@ -357,11 +354,10 @@ function ResumeStage() {
 
 function InterviewStage() {
   return (
-    <div className="flex flex-col items-start justify-center min-h-[70vh] py-20 relative z-10">
+    <div className="flex flex-col items-start justify-center w-full relative z-10">
       <motion.div
         initial={{ opacity: 0, x: -40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-8 w-full max-w-3xl"
       >
@@ -398,7 +394,7 @@ function InterviewStage() {
               </div>
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
                 className="bg-primary p-3 rounded-2xl rounded-tr-sm text-sm text-primary-foreground max-w-[85%] ml-auto"
               >
@@ -414,11 +410,10 @@ function InterviewStage() {
 
 function DashboardStage() {
   return (
-    <div className="flex flex-col items-start justify-center min-h-[70vh] py-20 pb-40 relative z-10">
+    <div className="flex flex-col items-start justify-center w-full relative z-10">
       <motion.div
         initial={{ opacity: 0, x: -40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-8 w-full max-w-3xl"
       >
@@ -461,46 +456,109 @@ function DashboardStage() {
 
 export function ScrollStory() {
   const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start center", "end end"]
-  });
+  const stickyRef = useRef(null);
+  const stageRefs = useRef([]);
+  const [activeStage, setActiveStage] = useState(0);
+  const [animationLock, setAnimationLock] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute("data-stage"));
+            if (!animationLock) {
+              setActiveStage(index);
+            }
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    stageRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [animationLock]);
+
+  useEffect(() => {
+    const stickyEl = stickyRef.current;
+    if (!stickyEl) return;
+
+    const handleWheel = (e) => {
+      if (animationLock) return;
+      setAnimationLock(true);
+      setTimeout(() => setAnimationLock(false), 800);
+    };
+
+    stickyEl.addEventListener("wheel", handleWheel, { passive: false });
+    return () => stickyEl.removeEventListener("wheel", handleWheel);
+  }, [animationLock]);
+
+  const renderActiveStage = () => {
+    switch (activeStage) {
+      case 0: return <GoalStage key="stage0" />;
+      case 1: return <RoadmapStage key="stage1" />;
+      case 2: return <ResumeStage key="stage2" />;
+      case 3: return <InterviewStage key="stage3" />;
+      case 4: return <DashboardStage key="stage4" />;
+      default: return null;
+    }
+  };
 
   return (
-    <section id="scroll-story" ref={containerRef} className="relative w-full overflow-hidden py-10 md:py-20 z-10">
-      
-      {/* Background ambient glowing orbs */}
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/4 translate-x-1/4 pointer-events-none z-0" />
-      <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-purple-500/5 rounded-full blur-[140px] translate-y-1/4 -translate-x-1/4 pointer-events-none z-0" />
-      <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[140px] -translate-y-1/2 -translate-x-1/2 pointer-events-none z-0" />
+    <section id="scroll-story" ref={containerRef} className="relative h-[500vh]">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            ref={(el) => (stageRefs.current[i] = el)}
+            data-stage={i}
+            className="h-[100vh]"
+          />
+        ))}
+      </div>
 
-      <div className="container mx-auto px-4 md:px-6 relative z-10">
-        
-        {/* Continuous Tracking Line (Desktop Only) */}
-        <div className="absolute left-6 md:left-[5.5rem] top-10 bottom-10 w-px bg-border/40 hidden md:block">
-          <motion.div 
-            className="absolute top-0 left-0 w-full bg-gradient-to-b from-primary via-purple-500 to-emerald-500 origin-top"
-            style={{ 
-              height: "100%",
-              scaleY: useTransform(scrollYProgress, [0, 1], [0, 1])
-            }}
-          />
-          {/* Glowing tracker dot */}
-          <motion.div 
-            className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary shadow-[0_0_15px_rgba(var(--primary),1)]"
-            style={{ 
-              top: useTransform(scrollYProgress, [0, 1], ["0%", "100%"]) 
-            }}
-          />
+      <div ref={stickyRef} className="sticky top-0 h-screen overflow-hidden flex items-center bg-background">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/4 translate-x-1/4 pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-purple-500/5 rounded-full blur-[140px] translate-y-1/4 -translate-x-1/4 pointer-events-none z-0" />
+        <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[140px] -translate-y-1/2 -translate-x-1/2 pointer-events-none z-0" />
+
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-50">
+          {stages.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                setActiveStage(i);
+                window.scrollTo({
+                  top: containerRef.current.offsetTop + (i * window.innerHeight),
+                  behavior: "smooth"
+                });
+              }}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${activeStage === i ? "bg-primary scale-125" : "bg-border hover:bg-primary/50"}`}
+            />
+          ))}
         </div>
 
-        {/* Vertical Stages */}
-        <div className="md:pl-32 max-w-5xl mx-auto space-y-12">
-          <GoalStage />
-          <RoadmapStage />
-          <ResumeStage />
-          <InterviewStage />
-          <DashboardStage />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-50 animate-bounce text-muted-foreground">
+          <span className="text-[10px] uppercase tracking-widest font-bold">Scroll to Explore</span>
+          <div className="w-px h-8 bg-gradient-to-b from-muted-foreground to-transparent" />
+        </div>
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10 w-full md:pl-32">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`active-stage-${activeStage}`}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -40 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {renderActiveStage()}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </section>

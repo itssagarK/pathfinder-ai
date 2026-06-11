@@ -56,6 +56,20 @@ model User {
   networkingEmails     NetworkingEmail[]
   projectIdeas         ProjectIdea[]
   resumeGenerations    ResumeGeneration[]
+  starStories          StarStory[]
+  recruiterEmails      RecruiterEmail[]
+  interviewCheatSheets InterviewCheatSheet[]
+  linkedinPosts        LinkedInPost[]
+  offerComparisons     OfferComparison[]
+  careerPivots         CareerPivot[]
+  onboardingPlans      OnboardingPlan[]
+  resignationLetters   ResignationLetter[]
+  promotionStrategies  PromotionStrategy[]
+  freelanceProposals   FreelanceProposal[]
+  behavioralPreps      BehavioralPrep[]
+  layoffStrategies     LayoffStrategy[]
+  coffeeChatSessions   CoffeeChatSession[]
+  equityAnalyses       EquityAnalysis[]
   settings             UserSettings?
 
   exportRecords ExportRecord[]
@@ -98,6 +112,7 @@ model CoverLetter {
   status         String   @default("draft")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  jobApplications JobApplication[]
 
   @@index([userId])
 }
@@ -147,6 +162,7 @@ model Message {
   role           String
   content        String       @db.Text
   createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([conversationId])
   @@index([conversationId, createdAt])
@@ -166,6 +182,7 @@ model ATSAnalysis {
   suggestions     Json[]
   overallFeedback String?  @db.Text
   createdAt       DateTime @default(now())
+  jobApplications JobApplication[]
 
   @@index([userId])
 }
@@ -270,6 +287,11 @@ model JobApplication {
   salary         String?
   location       String?
   notes          String?      @db.Text
+  atsAnalysisId  String?
+  atsAnalysis    ATSAnalysis? @relation(fields: [atsAnalysisId], references: [id], onDelete: SetNull)
+  coverLetterId  String?
+  coverLetter    CoverLetter? @relation(fields: [coverLetterId], references: [id], onDelete: SetNull)
+  interviewDate  DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -318,6 +340,169 @@ model ResumeGeneration {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobDescription String   @db.Text
   content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model StarStory {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawExperience  String   @db.Text
+  starContent    Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model RecruiterEmail {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originalEmail  String   @db.Text
+  goal           String
+  replyContent   String   @db.Text
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model InterviewCheatSheet {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  role           String
+  content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LinkedInPost {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic          String   @db.Text
+  content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OfferComparison {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offers         Json
+  analysis       Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CareerPivot {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentRole    String
+  targetRole     String
+  analysis       Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OnboardingPlan {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  role           String
+  planContent    Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ResignationLetter {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circumstance   String
+  lastDay        String
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PromotionStrategy {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetRole     String
+  content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model FreelanceProposal {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectDetails String   @db.Text
+  rate           String
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model BehavioralPrep {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  assessmentType String
+  content        Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LayoffStrategy {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details        String   @db.Text
+  planContent    Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CoffeeChatSession {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetRole     String
+  industry       String
+  chatHistory    Json
+  feedback       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model EquityAnalysis {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offerDetails   Json
+  analysis       Json
   createdAt      DateTime @default(now())
 
   @@index([userId])
