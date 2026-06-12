@@ -46,7 +46,10 @@ import {
   Rocket,
   Home,
   Workflow,
-  CalendarHeart
+  CalendarHeart,
+  Globe,
+  MapPin,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -111,6 +114,9 @@ const MENU_GROUPS = [
       { href: "/remote-work", label: "Remote Work Negotiator", icon: <Home className="h-4 w-4 text-emerald-500" /> },
       { href: "/internal-transfer", label: "Internal Transfer", icon: <Workflow className="h-4 w-4 text-blue-500" /> },
       { href: "/career-break", label: "Sabbatical Planner", icon: <CalendarHeart className="h-4 w-4 text-violet-500" /> },
+      { href: "/visa-guide", label: "Visa & Immigration", icon: <Globe className="h-4 w-4 text-indigo-500" /> },
+      { href: "/relocation", label: "Relocation Analyzer", icon: <MapPin className="h-4 w-4 text-orange-500" /> },
+      { href: "/mentor-matcher", label: "Mentor Matcher", icon: <Users className="h-4 w-4 text-cyan-500" /> },
     ]
   },
   {
