@@ -50,6 +50,8 @@ model User {
   conversations   Conversation[]
   resume          Resume?
   industryInsight IndustryInsight? @relation(fields: [industry], references: [industry])
+  atsAnalyses     AtsAnalysis[]
+  settings        UserSettings?
   atsAnalyses          ATSAnalysis[]
   roadmaps             Roadmap[]
   jobApplications      JobApplication[]
@@ -181,7 +183,7 @@ model Message {
   @@index([conversationId, createdAt])
 }
 
-model ATSAnalysis {
+model AtsAnalysis {
   id              String   @id @default(cuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id])
@@ -198,6 +200,7 @@ model ATSAnalysis {
   jobApplications JobApplication[]
 
   @@index([userId])
+  @@map("ATSAnalysis")
 }
 
 model ExportRecord {
