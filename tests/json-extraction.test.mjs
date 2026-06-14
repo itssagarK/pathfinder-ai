@@ -56,6 +56,16 @@ describe("extractJSON", () => {
     });
   });
 
+  it("extracts valid JSON even when preceded by conversational/explanatory braces", () => {
+    const raw = "Here is some {placeholder} text.\nActual JSON: { \"a\": 1 }";
+    expect(parseAIJson(raw)).toEqual({ a: 1 });
+  });
+
+  it("extracts valid JSON even when multiple invalid balanced blocks precede it", () => {
+    const raw = "Note: {foo} and {bar} are used.\nResult: {\"status\": \"ok\"}";
+    expect(parseAIJson(raw)).toEqual({ status: "ok" });
+  });
+
   it("throws when no JSON is present", () => {
     expect(() => extractJSON("there is no json here")).toThrow(
       "No JSON payload found in AI response"
