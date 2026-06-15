@@ -94,35 +94,55 @@ export async function updateUser(data) {
  * Returns: { isOnboarded: boolean }
  */
 export async function getUserOnboardingStatus() {
-  const { userId } = await auth();
+  try {
+    const { userId } = await auth();
 
-  if (!userId) {
-    return { isOnboarded: false, user: null, isSignedIn: false };
-  }
+    if (!userId) {
+      return { isOnboarded: false, user: null, isSignedIn: false };
+    }
 
-  /* 1 ▸ look up by Clerk ID */
-  let user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
-
-  if (!user) {
-    /* 2 ▸ pull data from Clerk */
-    const backend   = await clerkClient();
-    const clerkUser = await backend.users.getUser(userId);
-
-    const email = clerkUser.emailAddresses?.[0]?.emailAddress;
-    if (!email) throw new Error("User email not found in Clerk!");
-
-    /* 2 ▸ create a brand-new row */
-    user = await db.user.create({
-      data: {
-        clerkUserId: userId,
-        email,
-        name: clerkUser.firstName ?? "",
-        imageUrl: clerkUser.imageUrl ?? "",
-      },
+    /* 1 ▸ look up by Clerk ID */
+    let user = await db.user.findUnique({
+      where: { clerkUserId: userId },
     });
-  }
 
-  return { isOnboarded: Boolean(user.industry), user, isSignedIn: true };
+    if (!user) {
+      /* 2 ▸ pull data from Clerk */
+      const backend = await clerkClient();
+      const clerkUser = await backend.users.getUser(userId);
+
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+      if (!email) throw new Error("User email not found in Clerk!");
+
+      /* 2 ▸ create or update the user row safely */
+      try {
+        user = await db.user.upsert({
+          where: { clerkUserId: userId },
+          update: {
+            name: clerkUser.firstName ?? "",
+            imageUrl: clerkUser.imageUrl ?? "",
+          },
+          create: {
+            clerkUserId: userId,
+            email,
+            name: clerkUser.firstName ?? "",
+            imageUrl: clerkUser.imageUrl ?? "",
+          },
+        });
+      } catch (error) {
+        if (error.code === "P2002") {
+          user = await db.user.findUnique({
+            where: { clerkUserId: userId },
+          });
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return { isOnboarded: Boolean(user?.industry), user, isSignedIn: true };
+  } catch (error) {
+    console.error("Error fetching onboarding status:", error);
+    throw new Error("Failed to get onboarding status");
+  }
 }
