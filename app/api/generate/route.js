@@ -21,7 +21,6 @@ import {
 import {
   getCachedResponse,
   cacheResponse,
-  buildCacheKey,
   getPendingGenerationRequest,
   setPendingGenerationRequest,
   deletePendingGenerationRequest,
@@ -323,9 +322,6 @@ export async function POST(request) {
   });
 
   const aiContext = buildUserAiContext(user, recentMessages.reverse());
-
-  const clientIp = request.headers.get("x-real-ip") || "anonymous";
-  cacheUser = userId || clientIp;
 
   const restrictedPrompt = buildSecurePrompt({
     context: aiContext.context,
