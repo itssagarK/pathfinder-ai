@@ -22,7 +22,7 @@ export async function generateAIInsights(industry) {
  */
 export async function getIndustryInsights() {
   const { userId } = await auth();
-  if (!userId) return null;
+  if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },

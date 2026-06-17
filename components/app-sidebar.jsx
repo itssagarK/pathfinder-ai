@@ -3,8 +3,14 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+
+const ClerkUserButton = dynamic(
+  () => import("@clerk/nextjs").then((mod) => mod.UserButton),
+  { ssr: false }
+);
 import {
   LayoutDashboard,
   Bot,
@@ -46,10 +52,23 @@ import {
   Rocket,
   Home,
   Workflow,
-  CalendarHeart
+  CalendarHeart,
+  Globe,
+  MapPin,
+  Users,
+  Flag,
+  HandCoins,
+  Target,
+  LineChart,
+  Brain,
+  BookOpen,
+  Activity,
+  RocketIcon,
+  Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const MENU_GROUPS = [
   {
@@ -104,6 +123,7 @@ const MENU_GROUPS = [
       { href: "/freelance-proposal", label: "Freelance Proposals", icon: <FileSignature className="h-4 w-4 text-teal-500" /> },
       { href: "/explore", label: "Explore Careers", icon: <Compass className="h-4 w-4 text-cyan-500" /> },
       { href: "/roadmap", label: "Career Roadmap", icon: <Map className="h-4 w-4 text-amber-500" /> },
+      { href: "/skill-gap-analyzer", label: "Skill Gap Analyzer", icon: <Activity className="h-4 w-4 text-fuchsia-500" /> },
       { href: "/resignation-letter", label: "Resignation Letter", icon: <DoorOpen className="h-4 w-4 text-red-500" /> },
       { href: "/layoff-strategist", label: "Layoff Strategist", icon: <ShieldAlert className="h-4 w-4 text-blue-500" /> },
       { href: "/burnout-coach", label: "Burnout Coach", icon: <HeartPulse className="h-4 w-4 text-rose-500" /> },
@@ -111,6 +131,17 @@ const MENU_GROUPS = [
       { href: "/remote-work", label: "Remote Work Negotiator", icon: <Home className="h-4 w-4 text-emerald-500" /> },
       { href: "/internal-transfer", label: "Internal Transfer", icon: <Workflow className="h-4 w-4 text-blue-500" /> },
       { href: "/career-break", label: "Sabbatical Planner", icon: <CalendarHeart className="h-4 w-4 text-violet-500" /> },
+      { href: "/visa-guide", label: "Visa & Immigration", icon: <Globe className="h-4 w-4 text-indigo-500" /> },
+      { href: "/relocation", label: "Relocation Analyzer", icon: <MapPin className="h-4 w-4 text-orange-500" /> },
+      { href: "/mentor-matcher", label: "Mentor Matcher", icon: <Users className="h-4 w-4 text-cyan-500" /> },
+      { href: "/toxic-workplace", label: "Toxic Workplace Escape", icon: <Flag className="h-4 w-4 text-red-500" /> },
+      { href: "/freelance-rate", label: "Freelance Rate Calculator", icon: <HandCoins className="h-4 w-4 text-emerald-500" /> },
+      { href: "/ikigai", label: "Ikigai Builder", icon: <Target className="h-4 w-4 text-violet-500" /> },
+      { href: "/performance-review", label: "Performance Review Writer", icon: <LineChart className="h-4 w-4 text-blue-500" /> },
+      { href: "/imposter-syndrome", label: "Imposter Syndrome Coach", icon: <Brain className="h-4 w-4 text-rose-500" /> },
+      { href: "/manager-readme", label: "Manager README Builder", icon: <BookOpen className="h-4 w-4 text-cyan-500" /> },
+      { href: "/founder-readiness", label: "Startup Founder Readiness", icon: <RocketIcon className="h-4 w-4 text-orange-500" /> },
+      { href: "/executive-presence", label: "Executive Presence Coach", icon: <Crown className="h-4 w-4 text-purple-500" /> },
     ]
   },
   {
@@ -128,6 +159,8 @@ export default function AppSidebar() {
   
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+
+  useScrollLock(isMobile && isOpen);
 
   useEffect(() => {
     const handleResize = () => {
@@ -247,7 +280,7 @@ export default function AppSidebar() {
           isOpen || isMobile ? "gap-3 p-3" : "justify-center p-2"
         )}>
           <div className="relative shrink-0">
-            <UserButton 
+            <ClerkUserButton 
               appearance={{ 
                 elements: { 
                   avatarBox: "w-9 h-9 rounded-xl ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all shadow-lg" 

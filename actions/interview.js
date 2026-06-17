@@ -517,7 +517,7 @@ export async function generateQuiz(category = "Technical") {
   const categoryPrompts = {
     Technical: "Generate 10 technical interview questions focusing on programming concepts, data structures, system design, algorithms, and practical technical knowledge.",
     Behavioral: "Generate 10 behavioral interview questions focusing on teamwork, leadership, conflict resolution, communication, and past experiences. Use scenarios like 'Tell me about a time when...' or 'How would you handle...'",
-    Situational: "Generate 10 situational interview questions focusing on hypothetical workplace scenarios — how the candidate would handle specific on-the-job situations, ethical dilemmas, and decision-making.",
+    Situational: "Generate 10 situational interview questions focusing on hypothetical workplace scenarios - how the candidate would handle specific on-the-job situations, ethical dilemmas, and decision-making.",
     "Industry Knowledge": "Generate 10 industry knowledge interview questions focusing on domain trends, terminology, business context, and role-specific professional awareness.",
   };
 
@@ -573,7 +573,7 @@ Return ONLY a valid JSON object matching this schema. Do not output any markdown
     return quizValidation.data.questions.slice(0, 10);
   } catch (error) {
     console.error("AI Quiz generation failed, using fallback questions:", error);
-    const industryId = user.industry?.split("-")[0] || "tech";
+    const industryId = user.industry?.split("-")[0]?.toLowerCase() || "tech";
     return FallbackQuizPool[industryId] || TECH_FALLBACK_QUESTIONS;
   }
 }
@@ -662,7 +662,8 @@ export async function saveQuizResult(questions, answers, category = "Technical")
       improvementTip = tipResult.response.text().trim();
     } catch (e) {
       console.error("Failed to generate custom AI improvement tip:", e);
-      improvementTip = "Focus on reviewing core programming concepts and regular system design patterns to strengthen your skills.";
+      const industryText = user.industry ? `in ${user.industry.toLowerCase()}` : "in your field";
+      improvementTip = `Focus on reviewing core ${validatedCategory.toLowerCase()} concepts and typical industry practices ${industryText} to strengthen your skills.`;
     }
   }
 
@@ -739,26 +740,24 @@ export async function evaluateVoiceAnswer(question, transcribedAnswer) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const prompt = `You are an expert interview coach evaluating a spoken answer from a candidate.
-Evaluate the transcribed answer based on confidence, filler words, and content quality.
-
-Question: ${question}
-Candidate's spoken answer: ${transcribedAnswer}
-
-Provide feedback in JSON format ONLY:
+  const prompt = buildSecurePrompt({
+  context: "You are an expert interview coach evaluating a spoken answer from a candidate.",
+  task: "Evaluate the transcribed answer based on confidence, filler words, and content quality.",
+  untrustedData: [
+    { label: "question",          value: question,          maxLength: 1000 },
+    { label: "transcribedAnswer", value: transcribedAnswer, maxLength: 3000 },
+  ],
+  outputRules: `Provide feedback in JSON format ONLY. Do not output any markdown code fences or extra text:
 {
   "score": 85,
   "fillerWordsCount": 3,
   "confidence": "High",
   "feedback": "Your answer was very structured, but you used 'um' a few times."
-}`;
-
+}`,
+});
   try {
     const aiResult = await generateGeminiContent(prompt);
     let rawText = aiResult.response.text();
-    if (rawText.startsWith("\`\`\`json")) {
-      rawText = rawText.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
-    }
     const parsed = JSON.parse(rawText);
     return { success: true, data: parsed };
   } catch (error) {
@@ -774,28 +773,28 @@ export async function evaluateVideoAnswer(question, transcribedAnswer, metrics) 
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const prompt = `You are an expert interview coach evaluating a video interview response.
-Evaluate the transcribed answer and the provided facial metrics (e.g., face detected percentage).
 
-Question: ${question}
-Candidate's spoken answer: ${transcribedAnswer}
-Body Language Metrics: ${JSON.stringify(metrics)}
-
-Provide feedback in JSON format ONLY:
+const prompt = buildSecurePrompt({
+  context: "You are an expert interview coach evaluating a video interview response.",
+  task: "Evaluate the transcribed answer and the provided facial metrics (e.g., face detected percentage).",
+  untrustedData: [
+    { label: "question",           value: question,                    maxLength: 1000 },
+    { label: "transcribedAnswer",  value: transcribedAnswer,           maxLength: 3000 },
+    { label: "metrics",            value: JSON.stringify(metrics),     maxLength: 500  },
+  ],
+  outputRules: `Provide feedback in JSON format ONLY. Do not output any markdown code fences or extra text:
 {
   "score": 85,
   "fillerWordsCount": 3,
   "confidence": "High",
   "bodyLanguageFeedback": "You maintained great eye contact and presence.",
   "verbalFeedback": "Your answer was very structured, but you used 'um' a few times."
-}`;
+}`,
+}); 
 
   try {
     const aiResult = await generateGeminiContent(prompt);
     let rawText = aiResult.response.text();
-    if (rawText.startsWith("\`\`\`json")) {
-      rawText = rawText.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
-    }
     const parsed = JSON.parse(rawText);
     return { success: true, data: parsed };
   } catch (error) {

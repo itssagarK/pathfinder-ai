@@ -219,7 +219,7 @@ export async function POST(request) {
   if (!user) {
     return respondError(ERROR_CODES.USER_NOT_FOUND);
   }
-  const cacheUser = userId || request.headers.get("x-forwarded-for") || "anonymous";
+  let cacheUser = userId || request.headers.get("x-forwarded-for") || "anonymous";
 
   const existingCachedResponse = await getCachedResponse(
     cacheUser,
@@ -359,7 +359,7 @@ Rules:
 
   const restrictedCachedResponse = await getCachedResponse(
     cacheUser,
-    restrictedPrompt
+    promptCheck.prompt
   );
 
   if (restrictedCachedResponse) {
@@ -483,6 +483,7 @@ Rules:
             fullResponse
           );
         }
+        if (abortController.signal.aborted) { safeClose(); return; }
         safeEnqueue("done", {
           finalText: fullResponse,
           hasContent: Boolean(fullResponse.trim()),
@@ -525,3 +526,4 @@ Rules:
     headers,
   });
 }
+
