@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { USER_NOT_FOUND_MESSAGE } from "@/lib/errors";
+import { createAiPrompt } from "@/lib/prompt-builder";
 
 export async function generateAssessmentStrategy(company, assessmentType) {
   const { userId } = await auth();
@@ -22,7 +23,7 @@ export async function generateAssessmentStrategy(company, assessmentType) {
     return { success: false, errors: { _form: [USER_NOT_FOUND_MESSAGE] } };
   }
 
-  const prompt = buildSecurePrompt({
+  const prompt = createAiPrompt({
     context: "You are an expert organizational psychologist and executive recruiter.",
     task: `Analyze the '${assessmentType}' personality/behavioral test often used by '${company}'.
     Explain what traits the company is screening for and provide specific strategies on how the candidate should approach the test.`,
