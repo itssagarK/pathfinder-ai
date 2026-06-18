@@ -1,5 +1,5 @@
 "use server";
-
+import { JOB_DESCRIPTION_MAX_LENGTH } from "@/lib/input-limits";
 import { db } from "@/lib/prisma";
 import { getUserByClerkId } from "@/lib/user";
 import { auth } from "@clerk/nextjs/server";
@@ -36,7 +36,7 @@ export async function generateResumeContent(jobDescription) {
     task: `You are an expert Executive Resume Writer. Create a tailored, ATS-compliant resume based on the user's profile and the target job description. 
     Ensure keywords from the job description are naturally integrated. Focus on impact and metrics.`,
     untrustedData: [
-      { label: "jobDescription", value: jobDescription, maxLength: 5000 },
+      { label: "jobDescription", value: jobDescription, maxLength: JOB_DESCRIPTION_MAX_LENGTH },
     ],
     outputRules: `Provide the resume data in the following JSON format ONLY:
 {
