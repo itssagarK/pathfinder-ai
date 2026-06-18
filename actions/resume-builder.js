@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/prisma";
+import { getUserByClerkId } from "@/lib/user";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { buildSecurePrompt } from "@/lib/prompt-safety";
@@ -27,9 +28,7 @@ export async function generateResumeContent(jobDescription) {
     return { success: false, errors: { _form: ["Please provide a valid job description (at least 50 characters)."] } };
   }
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  const user = await getUserByClerkId(userId);
   if (!user) return { success: false, errors: { _form: ["User not found"] } };
 
   const prompt = buildSecurePrompt({
@@ -105,9 +104,7 @@ export async function getResumeHistory() {
   const { userId } = await auth();
   if (!userId) return { success: false, data: [] };
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  const user = await getUserByClerkId(userId);
   if (!user) return { success: false, data: [] };
 
   const records = await db.resumeGeneration.findMany({
