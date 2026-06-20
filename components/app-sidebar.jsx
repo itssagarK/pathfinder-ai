@@ -3,8 +3,14 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+
+const ClerkUserButton = dynamic(
+  () => import("@clerk/nextjs").then((mod) => mod.UserButton),
+  { ssr: false }
+);
 import {
   LayoutDashboard,
   Bot,
@@ -14,39 +20,138 @@ import {
   Copy,
   ScanSearch,
   Briefcase,
+  Map,
   Settings,
   Menu,
   X,
   ChevronLeft,
   ChevronRight,
   Diamond,
-  Sparkles
+  Sparkles,
+  Lightbulb,
+  DollarSign,
+  Video,
+  Flame,
+  Star,
+  Send,
+  Linkedin,
+  FileSearch,
+  Calculator,
+  ArrowRightLeft,
+  CalendarClock,
+  DoorOpen,
+  TrendingUp,
+  FileSignature,
+  BrainCircuit,
+  LayoutList,
+  Coffee,
+  ShieldAlert,
+  Compass,
+  Code2,
+  HeartPulse,
+  Rocket,
+  Home,
+  Workflow,
+  CalendarHeart,
+  Globe,
+  MapPin,
+  Users,
+  Flag,
+  HandCoins,
+  Target,
+  LineChart,
+  Brain,
+  BookOpen,
+  Activity,
+  RocketIcon,
+  Crown,
+  PenLine
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const MENU_GROUPS = [
   {
     title: "Intelligence",
     items: [
-      { href: "/dashboard", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
-      { href: "/ai-assistant", label: "AI Assistant", icon: <Bot className="h-4 w-4" /> },
-      { href: "/ats-analyzer", label: "ATS Analyzer", icon: <ScanSearch className="h-4 w-4" /> },
+      { href: "/dashboard", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" />, shortcut: "Alt+1" },
+      { href: "/ats-analyzer", label: "ATS Analyzer", icon: <ScanSearch className="h-4 w-4 text-blue-500" />, shortcut: "" },
+      { href: "/dashboard?tab=templates", label: "Templates", icon: <Copy className="h-4 w-4" />, shortcut: "" },
     ]
   },
   {
-    title: "Career Tools",
+    title: "Resumes & Branding",
     items: [
-      { href: "/resume", label: "Resumes", icon: <FileText className="h-4 w-4" /> },
-      { href: "/ai-cover-letter", label: "Cover Letters", icon: <Mail className="h-4 w-4" /> },
-      { href: "/interview", label: "Mock Interviews", icon: <Mic className="h-4 w-4" /> },
-      { href: "/dashboard?tab=templates", label: "Templates", icon: <Copy className="h-4 w-4" /> },
+      { href: "/resume-builder", label: "Resume Builder", icon: <FileText className="h-4 w-4 text-amber-500" />, shortcut: "Alt+2" },
+      { href: "/resume-roast", label: "Resume Roast", icon: <Flame className="h-4 w-4 text-red-500" />, shortcut: "" },
+      { href: "/resume-match", label: "Job Match Score", icon: <Target className="h-4 w-4 text-green-500" />, shortcut: "" },
+      { href: "/bullet-rewriter", label: "Bullet Rewriter", icon: <PenLine className="h-4 w-4 text-amber-500" />, shortcut: "" },
+      { href: "/ai-cover-letter", label: "Cover Letters", icon: <Mail className="h-4 w-4 text-rose-500" />, shortcut: "Alt+3" },
+      { href: "/linkedin-optimizer", label: "LinkedIn Optimizer", icon: <ScanSearch className="h-4 w-4 text-[#0A66C2]" />, shortcut: "" },
+      { href: "/linkedin-post", label: "LinkedIn Posts", icon: <Linkedin className="h-4 w-4 text-[#0A66C2]" />, shortcut: "" },
+    ]
+  },
+  {
+    title: "Interview Prep",
+    items: [
+      { href: "/interview", label: "Mock Interviews", icon: <Briefcase className="h-4 w-4 text-indigo-500" />, shortcut: "Alt+4" },
+      { href: "/interview/voice-coach", label: "Voice Coach", icon: <Mic className="h-4 w-4 text-emerald-500" />, shortcut: "" },
+      { href: "/interview/video-coach", label: "Video Coach", icon: <Video className="h-4 w-4 text-blue-500" />, shortcut: "" },
+      { href: "/interview/star-builder", label: "STAR Builder", icon: <Star className="h-4 w-4 text-yellow-500" />, shortcut: "" },
+      { href: "/interview/cheat-sheet", label: "Cheat Sheet", icon: <FileSearch className="h-4 w-4 text-zinc-500" />, shortcut: "" },
+      { href: "/behavioral-prep", label: "Behavioral Prep", icon: <BrainCircuit className="h-4 w-4 text-rose-500" />, shortcut: "" },
+      { href: "/coffee-chat", label: "Coffee Chat", icon: <Coffee className="h-4 w-4 text-amber-500" />, shortcut: "" },
+      { href: "/assignment-grader", label: "Take-Home Grader", icon: <Code2 className="h-4 w-4 text-violet-500" />, shortcut: "" },
+    ]
+  },
+  {
+    title: "Search & Offers",
+    items: [
+      { href: "/job-tracker", label: "Job Tracker", icon: <LayoutList className="h-4 w-4 text-green-500" />, shortcut: "" },
+      { href: "/salary-negotiation", label: "Salary Coach", icon: <DollarSign className="h-4 w-4 text-emerald-500" />, shortcut: "" },
+      { href: "/offer-comparer", label: "Offer Comparer", icon: <Calculator className="h-4 w-4 text-teal-500" />, shortcut: "" },
+      { href: "/networking", label: "Networking", icon: <Send className="h-4 w-4 text-blue-500" />, shortcut: "" },
+      { href: "/email-assistant", label: "Email Assistant", icon: <Mail className="h-4 w-4 text-violet-500" />, shortcut: "" },
+      { href: "/equity-decoder", label: "Equity Decoder", icon: <Calculator className="h-4 w-4 text-indigo-500" />, shortcut: "" },
+      { href: "/project-ideas", label: "Portfolio Ideas", icon: <Lightbulb className="h-4 w-4 text-amber-500" />, shortcut: "" },
+    ]
+  },
+  {
+    title: "Career Growth",
+    items: [
+      { href: "/promotion-negotiator", label: "Promotion Coach", icon: <TrendingUp className="h-4 w-4 text-purple-500" />, shortcut: "" },
+      { href: "/career-pivot", label: "Career Pivot", icon: <ArrowRightLeft className="h-4 w-4 text-orange-500" />, shortcut: "" },
+      { href: "/onboarding-plan", label: "30-60-90 Plan", icon: <CalendarClock className="h-4 w-4 text-indigo-500" />, shortcut: "" },
+      { href: "/freelance-proposal", label: "Freelance Proposals", icon: <FileSignature className="h-4 w-4 text-teal-500" />, shortcut: "" },
+      { href: "/explore", label: "Explore Careers", icon: <Compass className="h-4 w-4 text-cyan-500" />, shortcut: "" },
+      { href: "/roadmap", label: "Career Roadmap", icon: <Map className="h-4 w-4 text-amber-500" />, shortcut: "Alt+6" },
+      { href: "/skill-gap-analyzer", label: "Skill Gap Analyzer", icon: <Activity className="h-4 w-4 text-fuchsia-500" />, shortcut: "" },
+      { href: "/resignation-letter", label: "Resignation Letter", icon: <DoorOpen className="h-4 w-4 text-red-500" />, shortcut: "" },
+      { href: "/layoff-strategist", label: "Layoff Strategist", icon: <ShieldAlert className="h-4 w-4 text-blue-500" />, shortcut: "" },
+      { href: "/burnout-coach", label: "Burnout Coach", icon: <HeartPulse className="h-4 w-4 text-rose-500" />, shortcut: "" },
+      { href: "/side-hustle", label: "Side Hustle Ideas", icon: <Rocket className="h-4 w-4 text-cyan-500" />, shortcut: "" },
+      { href: "/remote-work", label: "Remote Work Negotiator", icon: <Home className="h-4 w-4 text-emerald-500" />, shortcut: "" },
+      { href: "/internal-transfer", label: "Internal Transfer", icon: <Workflow className="h-4 w-4 text-blue-500" />, shortcut: "" },
+      { href: "/career-break", label: "Sabbatical Planner", icon: <CalendarHeart className="h-4 w-4 text-violet-500" />, shortcut: "" },
+      { href: "/visa-guide", label: "Visa & Immigration", icon: <Globe className="h-4 w-4 text-indigo-500" />, shortcut: "" },
+      { href: "/relocation", label: "Relocation Analyzer", icon: <MapPin className="h-4 w-4 text-orange-500" />, shortcut: "" },
+      { href: "/mentor-matcher", label: "Mentor Matcher", icon: <Users className="h-4 w-4 text-cyan-500" />, shortcut: "" },
+      { href: "/toxic-workplace", label: "Toxic Workplace Escape", icon: <Flag className="h-4 w-4 text-red-500" />, shortcut: "" },
+      { href: "/freelance-rate", label: "Freelance Rate Calculator", icon: <HandCoins className="h-4 w-4 text-emerald-500" />, shortcut: "" },
+      { href: "/ikigai", label: "Ikigai Builder", icon: <Target className="h-4 w-4 text-violet-500" />, shortcut: "" },
+      { href: "/performance-review", label: "Performance Review Writer", icon: <LineChart className="h-4 w-4 text-blue-500" />, shortcut: "" },
+      { href: "/imposter-syndrome", label: "Imposter Syndrome Coach", icon: <Brain className="h-4 w-4 text-rose-500" />, shortcut: "" },
+      { href: "/manager-readme", label: "Manager README Builder", icon: <BookOpen className="h-4 w-4 text-cyan-500" />, shortcut: "" },
+      { href: "/founder-readiness", label: "Startup Founder Readiness", icon: <RocketIcon className="h-4 w-4 text-orange-500" />, shortcut: "" },
+      { href: "/executive-presence", label: "Executive Presence Coach", icon: <Crown className="h-4 w-4 text-purple-500" />, shortcut: "" },
+      { href: "/bullet-rewriter", label: "Bullet Rewriter", icon: <FileText className="h-4 w-4 text-blue-400" />, shortcut: "" },
     ]
   },
   {
     title: "System",
     items: [
-      { href: "/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
+      { href: "/settings", label: "Settings", icon: <Settings className="h-4 w-4" />, shortcut: "" },
     ]
   }
 ];
@@ -58,6 +163,8 @@ export default function AppSidebar() {
   
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+
+  useScrollLock(isMobile && isOpen);
 
   useEffect(() => {
     const handleResize = () => {
@@ -155,7 +262,14 @@ export default function AppSidebar() {
                       </div>
                       
                       {(isOpen || isMobile) && (
-                        <span className="text-sm font-bold tracking-tight">{link.label}</span>
+                        <>
+                          <span className="text-sm font-bold tracking-tight flex-1">{link.label}</span>
+                          {link.shortcut && (
+                            <span className="text-[10px] font-mono text-muted-foreground/50 bg-muted/50 px-2 py-0.5 rounded-md">
+                              {link.shortcut}
+                            </span>
+                          )}
+                        </>
                       )}
                       
                       {isActive && (isOpen || isMobile) && (
@@ -177,7 +291,7 @@ export default function AppSidebar() {
           isOpen || isMobile ? "gap-3 p-3" : "justify-center p-2"
         )}>
           <div className="relative shrink-0">
-            <UserButton 
+            <ClerkUserButton 
               appearance={{ 
                 elements: { 
                   avatarBox: "w-9 h-9 rounded-xl ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all shadow-lg" 
@@ -192,8 +306,12 @@ export default function AppSidebar() {
               animate={{ opacity: 1, x: 0 }}
               className="flex flex-col flex-1 min-w-0"
             >
-              <span className="text-xs font-black text-foreground truncate leading-tight">{user?.firstName || 'User Account'}</span>
-              <span className="text-[10px] font-bold text-muted-foreground truncate uppercase tracking-widest mt-0.5">Pro Member</span>
+              <span className="text-xs font-black text-foreground truncate leading-tight">
+                {user?.fullName || user?.firstName || user?.primaryEmailAddress?.emailAddress || 'User Account'}
+              </span>
+              <span className="text-[10px] font-bold text-muted-foreground truncate uppercase tracking-widest mt-0.5">
+                {user?.publicMetadata?.plan === "pro" ? "Pro Member" : "Free Member"}
+              </span>
             </motion.div>
           )}
         </div>

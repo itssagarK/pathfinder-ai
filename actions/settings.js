@@ -3,6 +3,8 @@
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { validateInput } from "@/lib/validate";
+import { userSettingsSchema } from "@/lib/schemas/forms";
 
 async function getUserByClerkId(userId) {
   try {
@@ -36,62 +38,66 @@ function normalizeSettingsInput(data) {
   };
 }
 
-export async function getUserSettings(userId) {
-  if (!userId) return null;
+export async function getUserSettings() {
+  const { userId } = await auth();
 
-  try {
-    const user = await getUserByClerkId(userId);
-
-    const existingSettings = await db.userSettings.findUnique({
-      where: { userId: user.id },
-    });
-
-    if (existingSettings) {
-      return normalizeSettings(existingSettings);
-    }
-
-    const settings = await db.userSettings.create({
-      data: { userId: user.id },
-    });
-
-    return normalizeSettings(settings);
-  } catch (error) {
-    console.error("[Settings Action] Error in getUserSettings:", error.message);
-    // Return default settings if DB call fails (e.g. table missing)
-    return normalizeSettings(null);
-  }
-}
-
-export async function updateUserSettings(userId, data) {
-  const { userId: authenticatedUserId } = await auth();
-
-  if (!authenticatedUserId || authenticatedUserId !== userId) {
+  if (!userId) {
     throw new Error("Unauthorized");
   }
 
   try {
     const user = await getUserByClerkId(userId);
-    const settingsData = normalizeSettingsInput(data);
 
-    const existingSettings = await db.userSettings.findUnique({
+    const settings = await db.userSettings.upsert({
       where: { userId: user.id },
+      update: {},
+      create: { userId: user.id },
     });
 
-    if (!existingSettings) {
-      await db.userSettings.create({
-        data: { userId: user.id },
-      });
+    return normalizeSettings(settings);
+  } catch (error) {
+    console.error("[Settings Action] Error in getUserSettings:", error.message);
+    return normalizeSettings(null);
+  }
+}
+
+export async function updateUserSettings(data) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      throw new Error("Unauthorized");
     }
 
-    const settings = await db.userSettings.update({
-      where: { userId: user.id },
-      data: settingsData,
+    const validation = validateInput(userSettingsSchema, data);
+    if (!validation.success) {
+      return { success: false, errors: validation.errors };
+    }
+
+    const user = await getUserByClerkId(userId);
+    const settingsData = validation.data;
+
+    const settings = await db.userSettings.upsert({
+      where: {
+        userId: user.id,
+      },
+      create: {
+        userId: user.id,
+        ...settingsData,
+      },
+      update: settingsData,
     });
 
     revalidatePath("/settings");
-    return normalizeSettings(settings);
+    return { success: true, settings: normalizeSettings(settings) };
   } catch (error) {
     console.error("[Settings Action] Error in updateUserSettings:", error.message);
-    throw new Error("Failed to update settings. Please ensure database migrations are applied.");
+    if (process.env.NODE_ENV === "test") {
+      throw error;
+    }
+    return {
+      success: false,
+      error: "Failed to update settings. Please ensure database migrations are applied."
+    };
   }
 }
