@@ -125,9 +125,71 @@ describe("useStreamFetch", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it("extracts nested error messages from JSON error responses", async () => {
+    server.use(
+      http.post("http://localhost/api/generate", () => {
+        return new Response(
+          JSON.stringify({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Invalid request body or parameters",
+            },
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      })
+    );
+
+    const { result } = renderHook(() => useStreamFetch());
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.startStream("Write a resume summary");
+    });
+
+    expect(outcome).toEqual({
+      status: "error",
+      error: "Invalid request body or parameters",
+      finalText: "",
+    });
+    expect(result.current.error).toBe("Invalid request body or parameters");
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("extracts nested error messages from SSE error events", async () => {
+    server.use(
+      http.post("http://localhost/api/generate", () => {
+        return new Response(
+          'event: error\ndata: {"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Rate limit exceeded, please wait"}}\n\n',
+          {
+            status: 429,
+            headers: { "Content-Type": "text/event-stream; charset=utf-8" },
+          }
+        );
+      })
+    );
+
+    const { result } = renderHook(() => useStreamFetch());
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.startStream("Write a resume summary");
+    });
+
+    expect(outcome).toEqual({
+      status: "error",
+      error: "Rate limit exceeded, please wait",
+      finalText: "",
+    });
+    expect(result.current.error).toBe("Rate limit exceeded, please wait");
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it("handles network failures via direct fetch mock (not MSW)", async () => {
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network failure"));
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network failure"));
 
     try {
       const { result } = renderHook(() => useStreamFetch());
@@ -144,7 +206,7 @@ describe("useStreamFetch", () => {
       expect(result.current.streamedText).toBe("");
       expect(result.current.finalText).toBe("");
     } finally {
-      globalThis.fetch = originalFetch;
+      fetchSpy.mockRestore();
     }
   });
 });
