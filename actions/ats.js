@@ -97,11 +97,6 @@ Be specific and actionable. Include at least 5 matched keywords (if present), at
 IMPORTANT: Return ONLY valid JSON. No markdown, no explanation outside the JSON.`,
     });
 
-    const result = await cachedGenerateGeminiContent(prompt, {}, {
-      key: generateCacheKey("ats", user.id, buildUserProfileContext(user), resumeContent, jobDescription),
-      ttl: ATS_ANALYSIS_CACHE_TTL_MS,
-    });
-    const parsedAnalysis = parseAIJson(result.response.text());
     const cacheKey = generateCacheKey(
       "ats",
       resumeContent,
