@@ -21,7 +21,7 @@ async function getAuthenticatedUserId() {
   // Fallback for local testing when auth is bypassed
   if (process.env.NODE_ENV === "development") {
     console.warn("Auth bypassed, using fallback user for local development");
-    return "dummy_user_123";
+    return process.env.DEV_FALLBACK_USER_ID || "dummy_user_123";
   }
   
   return null;
