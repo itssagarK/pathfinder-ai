@@ -30,7 +30,7 @@ export async function startCoffeeChat(industry, targetRole) {
 
   const initialMessage = {
     role: "assistant",
-    content: `Hi there! Thanks for reaching out. I'm a Senior Executive in ${industry} overseeing ${targetRole}s. What would you like to know about the industry or the role?`,
+    content: `Hi there! Thanks for reaching out. I'"'"'m a Senior Executive in ${industry} overseeing ${targetRole}s. What would you like to know about the industry or the role?`,
   };
 
   try {
@@ -60,6 +60,7 @@ export async function startCoffeeChat(industry, targetRole) {
     };
   }
 }
+
 export async function sendCoffeeChatMessage(sessionId, userMessage) {
   const { userId } = await auth();
   if (!userId) return { success: false, errors: { _form: ["Unauthorized"] } };
@@ -67,18 +68,16 @@ export async function sendCoffeeChatMessage(sessionId, userMessage) {
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return { success: false, errors: { _form: ["User not found"] } };
 
-  const session = await db.coffeeChatSession.findUnique({ where: { id: sessionId } });
-  if (!session) return { success: false, errors: { _form: ["Session not found"] } };
-
-  if (session.userId !== user.id) {
-    return { success: false, errors: { _form: ["Unauthorized access to session"] } };
-  }
+  const session = await db.coffeeChatSession.findUnique({ 
+    where: { id: sessionId, userId: user.id } 
+  });
+  if (!session) return { success: false, errors: { _form: ["Session not found or unauthorized"] } };
 
   const updatedHistory = [...session.chatHistory, { role: "user", content: userMessage }];
 
   const prompt = buildSecurePrompt({
-    context: `You are a Senior Executive in the ${session.industry} industry, managing ${session.targetRole}s. 
-    You are having a 15-minute informational "coffee chat" with a junior professional. 
+    context: `You are a Senior Executive in the ${session.industry} industry, managing ${session.targetRole}s.
+    You are having a 15-minute informational "coffee chat" with a junior professional.
     Be polite, insightful, and realistic. Provide good advice based on standard industry practices.
     If the user asks an awkward or inappropriate networking question, kindly redirect them or give them subtle feedback.
     Keep your response to 2-3 short paragraphs maximum.`,
@@ -88,7 +87,7 @@ export async function sendCoffeeChatMessage(sessionId, userMessage) {
     ],
     outputRules: `Provide the output in the following JSON format ONLY:
 {
-  "reply": "Your conversational reply to the user's message."
+  "reply": "Your conversational reply to the user'"'"'s message."
 }`,
   });
 
@@ -99,7 +98,7 @@ export async function sendCoffeeChatMessage(sessionId, userMessage) {
     updatedHistory.push({ role: "assistant", content: parsedData.reply });
 
     const record = await db.coffeeChatSession.update({
-      where: { id: sessionId },
+      where: { id: sessionId, userId: user.id },
       data: { chatHistory: updatedHistory },
     });
 
@@ -118,12 +117,10 @@ export async function generateCoffeeChatFeedback(sessionId) {
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return { success: false, errors: { _form: ["User not found"] } };
 
-  const session = await db.coffeeChatSession.findUnique({ where: { id: sessionId } });
-  if (!session) return { success: false, errors: { _form: ["Session not found"] } };
-
-  if (session.userId !== user.id) {
-    return { success: false, errors: { _form: ["Unauthorized access to session"] } };
-  }
+  const session = await db.coffeeChatSession.findUnique({ 
+    where: { id: sessionId, userId: user.id } 
+  });
+  if (!session) return { success: false, errors: { _form: ["Session not found or unauthorized"] } };
 
   const prompt = buildSecurePrompt({
     context: "You are an expert career coach analyzing an informational interview (coffee chat).",
@@ -145,7 +142,7 @@ export async function generateCoffeeChatFeedback(sessionId) {
     const parsedData = parseAIJson(aiResult.response.text());
 
     const record = await db.coffeeChatSession.update({
-      where: { id: sessionId },
+      where: { id: sessionId, userId: user.id },
       data: { feedback: parsedData },
     });
 
