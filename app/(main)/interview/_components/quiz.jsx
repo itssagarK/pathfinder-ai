@@ -95,9 +95,6 @@ export default function Quiz() {
   const finishQuiz = async () => {
     try {
       await saveQuizResultFn(quizData.sessionId, answers, selectedCategory);
-      await saveQuizResultFn(sessionId, answers, selectedCategory);
-      const qs = quizData?.questions || quizData;
-      await saveQuizResultFn(qs, answers, selectedCategory);
       toast.success("Quiz completed!");
     } catch (error) {
       toast.error(error.message || "Failed to save quiz results");

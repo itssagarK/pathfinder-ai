@@ -10,19 +10,31 @@ const mocks = vi.hoisted(() => ({
   cacheDelete: vi.fn(),
   userFindUnique: vi.fn(),
   assessmentFindFirst: vi.fn(),
+  checkRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  formatResetTime: vi.fn().mockReturnValue("1h"),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: mocks.auth,
 }));
 
+vi.mock("@/lib/rate-limit-actions", () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  formatResetTime: mocks.formatResetTime,
+}));
+
 vi.mock("@/lib/prisma", () => ({
   db: {
     user: {
-      findUnique: mocks.findUniqueUser,
+      findUnique: (...args) => {
+        const res1 = mocks.findUniqueUser(...args);
+        const res2 = mocks.userFindUnique(...args);
+        return res2 !== undefined ? res2 : res1;
+      },
     },
     assessment: {
       create: mocks.createAssessment,
+      findFirst: mocks.assessmentFindFirst,
     },
   },
 }));
@@ -43,22 +55,13 @@ vi.mock("@/lib/cache", async () => {
   };
 });
 
-import { generateQuiz, saveQuizResult } from "../actions/interview.js";
+import { generateQuiz, saveQuizResult, getAssessment } from "../actions/interview.js";
 
 describe("interview actions", () => {
-      findUnique: mocks.userFindUnique,
-    },
-    assessment: {
-      findFirst: mocks.assessmentFindFirst,
-    },
-  },
-}));
-
-import { getAssessment } from "../actions/interview.js";
-
-describe("getAssessment", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.checkRateLimit.mockResolvedValue({ allowed: true });
+    mocks.formatResetTime.mockReturnValue("1h");
   });
 
   describe("generateQuiz", () => {
@@ -179,7 +182,11 @@ describe("getAssessment", () => {
 
       expect(mocks.cacheDelete).not.toHaveBeenCalled();
       expect(mocks.createAssessment).not.toHaveBeenCalled();
-  it("returns null if user is not authenticated", async () => {
+    });
+  });
+
+  describe("getAssessment", () => {
+    it("returns null if user is not authenticated", async () => {
     mocks.auth.mockResolvedValue({ userId: null });
     const result = await getAssessment("assessment-1");
     expect(result).toBeNull();
@@ -211,4 +218,5 @@ describe("getAssessment", () => {
       },
     });
   });
+});
 });
