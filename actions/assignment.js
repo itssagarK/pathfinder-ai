@@ -6,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
+import { CREATED_AT_DESC } from "@/lib/sort-config";
 import { USER_NOT_FOUND_RESPONSE } from "@/lib/user-not-found";
 
 export async function gradeAssignment(promptText, solutionText) {
@@ -68,7 +69,7 @@ export async function getAssignmentGrades() {
 
   const records = await db.assignmentGrade.findMany({
     where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
+    orderBy: CREATED_AT_DESC,
   });
 
   return { success: true, data: records };

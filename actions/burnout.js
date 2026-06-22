@@ -7,6 +7,7 @@ import { buildUserLookup } from "@/lib/user-query";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { USER_NOT_FOUND_RESPONSE } from "@/lib/user-not-found";
+import { CREATED_AT_DESC } from "@/lib/sort-config";
 
 export async function assessBurnout(symptoms, workload) {
   const { userId } = await auth();
@@ -70,7 +71,7 @@ export async function getBurnoutAssessments() {
 
   const records = await db.burnoutAssessment.findMany({
     where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
+    orderBy: CREATED_AT_DESC,
   });
 
   return { success: true, data: records };
