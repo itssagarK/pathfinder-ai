@@ -9,6 +9,8 @@ import { logActionError } from "@/lib/action-logger";
 import { revalidatePath } from "next/cache";
 import { EMPTY_HISTORY_RESPONSE } from "@/lib/history-response";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
+import { revalidateAppPath } from "@/lib/cache-revalidate";
+import { getAuthenticatedHistoryUser } from "@/lib/history-auth";
 import { buildHistoryResponse } from "@/lib/history-loader";
 import { generateGeminiContent } from "@/lib/gemini";
 import { getHistoryRecords } from "@/lib/history-query";
