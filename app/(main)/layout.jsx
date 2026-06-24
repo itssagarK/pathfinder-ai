@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/app-sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default function MainLayout({ children }) {
   const router = useRouter();
 
   // Keyboard Shortcuts for Dashboard Navigation

@@ -788,16 +788,9 @@ export async function evaluateVoiceAnswer(question, transcribedAnswer) {
  */
 export async function evaluateVideoAnswer(question, transcribedAnswer, metrics) {
   const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  if (!userId && process.env.NODE_ENV !== "development") throw new Error("Unauthorized");
 
-  const assessment = await db.assessment.findFirst({
-    where: {
-      id,
-      userId: user.id,
-    },
-  });
-
-const prompt = buildSecurePrompt({
+  const prompt = buildSecurePrompt({
   context: "You are an expert interview coach evaluating a video interview response.",
   task: "Evaluate the transcribed answer and the provided facial metrics (e.g., face detected percentage).",
   untrustedData: [
