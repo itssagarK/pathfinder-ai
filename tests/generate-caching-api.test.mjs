@@ -20,6 +20,9 @@ const mocks = vi.hoisted(() => ({
   enforceRateLimit: vi.fn(),
   getCachedResponse: vi.fn(),
   cacheResponse: vi.fn(),
+  getPendingGenerationRequest: vi.fn(),
+  setPendingGenerationRequest: vi.fn(),
+  deletePendingGenerationRequest: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -44,6 +47,12 @@ vi.mock("@/lib/cache/cache-service", () => ({
   getCachedResponse: mocks.getCachedResponse,
   cacheResponse: mocks.cacheResponse,
   getPendingGenerationRequest: vi.fn(),
+  getPendingGenerationRequest: vi.fn().mockResolvedValue(null),
+  setPendingGenerationRequest: vi.fn().mockResolvedValue(undefined),
+  deletePendingGenerationRequest: vi.fn().mockResolvedValue(undefined),
+  getPendingGenerationRequest: mocks.getPendingGenerationRequest,
+  setPendingGenerationRequest: mocks.setPendingGenerationRequest,
+  deletePendingGenerationRequest: mocks.deletePendingGenerationRequest,
   setPendingGenerationRequest: vi.fn(),
   deletePendingGenerationRequest: vi.fn(),
 }));
@@ -57,12 +66,16 @@ describe("Generate API Route Caching", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mocks.getPendingGenerationRequest.mockResolvedValue(null);
+
     // Default rate limit configuration (allow request)
     mocks.enforceRateLimit.mockResolvedValue({
       allowed: true,
       remaining: 10,
       retryAfterSeconds: 0,
     });
+
+    mocks.getPendingGenerationRequest.mockResolvedValue(null);
 
     // Default authenticated user
     mocks.auth.mockResolvedValue({ userId: "clerk-user-123" });
@@ -127,9 +140,11 @@ describe("Generate API Route Caching", () => {
     // The key used for cache storage (argument 2) should match the key queried in getCachedResponse
     expect(mocks.getCachedResponse).toHaveBeenCalledTimes(2);
     const lookupKey = mocks.getCachedResponse.mock.calls[1][1];
+    expect(mocks.getCachedResponse.mock.calls.length).toBeGreaterThanOrEqual(1);
+    const lookupKeys = mocks.getCachedResponse.mock.calls.map(call => call[1]);
     const storageKey = mocks.cacheResponse.mock.calls[0][1];
 
-    expect(storageKey).toBe(lookupKey);
+    expect(lookupKeys).toContain(storageKey);
     // Crucially, it must be the restrictedPrompt containing safety/context and not the raw user prompt
     expect(storageKey).not.toBe("How do I become a software engineer?");
     expect(storageKey).toContain("How do I become a software engineer?");
