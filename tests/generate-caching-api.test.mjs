@@ -43,6 +43,9 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@/lib/cache/cache-service", () => ({
   getCachedResponse: mocks.getCachedResponse,
   cacheResponse: mocks.cacheResponse,
+  getPendingGenerationRequest: vi.fn(),
+  setPendingGenerationRequest: vi.fn(),
+  deletePendingGenerationRequest: vi.fn(),
 }));
 
 // We need to set up minimal env vars needed by the route
@@ -122,8 +125,8 @@ describe("Generate API Route Caching", () => {
     expect(mocks.cacheResponse).toHaveBeenCalledTimes(1);
 
     // The key used for cache storage (argument 2) should match the key queried in getCachedResponse
-    expect(mocks.getCachedResponse).toHaveBeenCalledTimes(1);
-    const lookupKey = mocks.getCachedResponse.mock.calls[0][1];
+    expect(mocks.getCachedResponse).toHaveBeenCalledTimes(2);
+    const lookupKey = mocks.getCachedResponse.mock.calls[1][1];
     const storageKey = mocks.cacheResponse.mock.calls[0][1];
 
     expect(storageKey).toBe(lookupKey);
