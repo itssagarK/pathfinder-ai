@@ -795,6 +795,11 @@ export async function evaluateVoiceAnswer(question, transcribedAnswer) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
+  const voiceLimit = await checkRateLimit(userId, "voiceEvaluation");
+  if (!voiceLimit.allowed) {
+    return { success: false, error: Voice evaluation limit reached. Resets in . };
+  }
+
   const prompt = buildSecurePrompt({
   context: "You are an expert interview coach evaluating a spoken answer from a candidate.",
   task: "Evaluate the transcribed answer based on confidence, filler words, and content quality.",
@@ -830,6 +835,11 @@ export async function evaluateVoiceAnswer(question, transcribedAnswer) {
 export async function evaluateVideoAnswer(question, transcribedAnswer, metrics) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+
+  const videoLimit = await checkRateLimit(userId, "videoEvaluation");
+  if (!videoLimit.allowed) {
+    return { success: false, error: Video evaluation limit reached. Resets in . };
+  }
 
   const prompt = buildSecurePrompt({
     context: "You are an expert interview coach evaluating a video interview response.",
