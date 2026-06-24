@@ -2,8 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
-  findUnique: vi.fn(),
-  create: vi.fn(),
+  findUniqueUser: vi.fn(),
+  atsAnalysisCreate: vi.fn(),
+  aiRateLimitFindUnique: vi.fn(),
+  aiRateLimitUpsert: vi.fn(),
+  aiRateLimitUpdate: vi.fn(),
   cachedGenerateGeminiContent: vi.fn(),
   generateCacheKey: vi.fn(),
   checkRateLimit: vi.fn(),
@@ -17,12 +20,22 @@ vi.mock("@clerk/nextjs/server", () => ({
 vi.mock("@/lib/prisma", () => ({
   db: {
     user: {
-      findUnique: mocks.findUnique,
+      findUnique: mocks.findUniqueUser,
     },
     atsAnalysis: {
-      create: mocks.create,
+      create: mocks.atsAnalysisCreate,
+    },
+    aiRateLimit: {
+      findUnique: mocks.aiRateLimitFindUnique,
+      upsert: mocks.aiRateLimitUpsert,
+      update: mocks.aiRateLimitUpdate,
     },
   },
+}));
+
+vi.mock("@/lib/rate-limit-actions", () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  formatResetTime: mocks.formatResetTime,
 }));
 
 vi.mock("@/lib/cache", async () => {
@@ -43,11 +56,15 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+process.env.GEMINI_API_KEY = "dummy-api-key";
+
 import { analyzeATS } from "../actions/ats.js";
 
 describe("analyzeATS", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.checkRateLimit.mockResolvedValue({ allowed: true });
+    mocks.formatResetTime.mockReturnValue("10m");
   });
 
   it("uses cachedGenerateGeminiContent with a specific cache key", async () => {
@@ -61,6 +78,8 @@ describe("analyzeATS", () => {
     mocks.auth.mockResolvedValue({ userId: "user-1" });
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
     mocks.findUnique.mockResolvedValue({ id: "db-user-1", clerkUserId: "user-1" });
+    mocks.findUniqueUser.mockResolvedValue({ id: "db-user-1", clerkUserId: "user-1" });
+    mocks.aiRateLimitUpsert.mockResolvedValue({ count: 1 });
     mocks.generateCacheKey.mockReturnValue("ats:test-key");
     mocks.cachedGenerateGeminiContent.mockResolvedValue({
       response: {
@@ -80,7 +99,7 @@ describe("analyzeATS", () => {
         }),
       },
     });
-    mocks.create.mockResolvedValue({ id: "analysis-1" });
+    mocks.atsAnalysisCreate.mockResolvedValue({ id: "analysis-1" });
 
     const result = await analyzeATS(rawParams);
 
@@ -100,6 +119,6 @@ describe("analyzeATS", () => {
         ttl: expect.any(Number),
       })
     );
-    expect(mocks.create).toHaveBeenCalled();
+    expect(mocks.atsAnalysisCreate).toHaveBeenCalled();
   });
 });
