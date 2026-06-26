@@ -221,6 +221,9 @@ export async function POST(request) {
   }
   let cacheUser = userId || extractTrustedClientIp(request.headers) || "anonymous";
 
+
+
+
   // Check for pending request (deduplication)
   const pendingRequest = await getPendingGenerationRequest(
     cacheUser,
