@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 import { USER_NOT_FOUND_MESSAGE } from "@/lib/errors";
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
@@ -39,8 +40,7 @@ export async function saveResume(rawContent) {
     revalidatePath("/resume");
     return { success: true, data: resume };
   } catch (error) {
-    console.error("Error saving resume content:", error);
-    return { success: false, errors: { _form: ["Failed to update resume storage transaction record."] } };
+    return handleServerError(error, "resume");
   }
 }
 
@@ -60,8 +60,7 @@ export async function getResume() {
       },
     });
   } catch (error) {
-    console.error("Error fetching resume:", error);
-    return null;
+    return handleServerError(error, "resume");
   }
 }
 
@@ -127,7 +126,6 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no code
         const raw = p === prompt
           ? await cachedGenerateGeminiContent(p, {}, {
               key: generateCacheKey("improve", user.id, buildUserProfileContext(user), current, type),
-              key: generateCacheKey("improve", userId, current, type, user.industry),
               ttl: RESUME_IMPROVEMENT_CACHE_TTL_MS,
             })
           : await generateGeminiContent(p);
@@ -148,7 +146,7 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no code
     const improvedText = `${result.data.improvedContent}${highlightsText}`;
     return { success: true, data: improvedText };
   } catch (error) {
-    console.error("Error optimizing structural field elements:", error);
-    return { success: false, errors: { _form: [error?.message || "AI pipeline configuration encountered an error."] } };
+    return handleServerError(error, "resume");
   }
 }
+

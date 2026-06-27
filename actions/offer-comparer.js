@@ -1,4 +1,6 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
+import { createErrorResponse } from "@/lib/action-errors";
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
@@ -14,7 +16,7 @@ export async function compareOffers(offers) {
   if (!userId) return { success: false, errors: { _form: ["Unauthorized"] } };
 
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
-  if (!user) return { success: false, errors: { _form: ["User not found"] } };
+  if (!user) return createErrorResponse("User not found");
 
   const rateLimitResult = await checkRateLimit(user.id, "offerComparer");
   if (!rateLimitResult.allowed) {
@@ -73,8 +75,7 @@ export async function compareOffers(offers) {
     revalidatePath("/offer-comparer");
     return { success: true, data: record };
   } catch (error) {
-    console.error("Offer Comparison Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to compare offers"] } };
+    return handleServerError(error, "offer-comparer");
   }
 }
 

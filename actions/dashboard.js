@@ -1,7 +1,9 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { createLookupResponse } from "@/lib/lookup-response";
 import {
   generateIndustryInsightData,
   getIndustryInsightRefreshTime,
@@ -47,7 +49,7 @@ export async function getIndustryInsights() {
     where: { clerkUserId: userId },
     include: { industryInsight: true },
   });
-  if (!user) return null;
+  if (!user) return createLookupResponse(null);;
 
   if (!user.industry) {
     return null;
@@ -92,8 +94,7 @@ export async function getIndustryInsights() {
 
     return user.industryInsight;
   } catch (error) {
-    console.error("Failed to fetch or save industry insights:", error);
-    return null;
+    return handleServerError(error, "dashboard");
   }
 }
 
