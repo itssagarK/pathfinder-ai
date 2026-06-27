@@ -1,13 +1,12 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { createErrorResponse } from "@/lib/action-errors";
 import { getAuthenticatedUserId } from "@/lib/auth-userid";
-import { USER_NOT_FOUND_MESSAGE } from "@/lib/errors";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
-import { userExists } from "@/lib/user-guards";
 import { generateGeminiContent } from "@/lib/gemini";
 import { UNAUTHORIZED_RESPONSE } from "@/lib/auth-errors";
 
@@ -65,8 +64,7 @@ export async function generatePivotStrategy(currentRole, targetRole) {
     revalidatePath("/career-pivot");
     return { success: true, data: record };
   } catch (error) {
-    console.error("Career Pivot Generation Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to generate pivot strategy"] } };
+    return handleServerError(error, "career-pivot");
   }
 }
 

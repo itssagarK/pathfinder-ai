@@ -60,41 +60,42 @@ model User {
   roadmaps              Roadmap[]
   jobApplications       JobApplication[]
   linkedinOptimizations LinkedInOptimization[]
-  networkingEmails      NetworkingEmail[]
-  projectIdeas          ProjectIdea[]
-  resumeGenerations     ResumeGeneration[]
-  starStories           StarStory[]
-  recruiterEmails       RecruiterEmail[]
-  interviewCheatSheets  InterviewCheatSheet[]
-  linkedinPosts         LinkedInPost[]
-  offerComparisons      OfferComparison[]
-  careerPivots          CareerPivot[]
-  onboardingPlans       OnboardingPlan[]
-  resignationLetters    ResignationLetter[]
-  promotionStrategies   PromotionStrategy[]
-  freelanceProposals    FreelanceProposal[]
-  behavioralPreps       BehavioralPrep[]
-  layoffStrategies      LayoffStrategy[]
-  coffeeChatSessions    CoffeeChatSession[]
-  equityAnalyses        EquityAnalysis[]
-  assignmentGrades      AssignmentGrade[]
-  burnoutAssessments    BurnoutAssessment[]
-  sideHustleIdeas       SideHustleIdea[]
-  remoteWorkPitches     RemoteWorkPitch[]
-  internalTransfers     InternalTransfer[]
-  careerBreakPlans      CareerBreakPlan[]
-  visaStrategies        VisaStrategy[]
-  relocationAnalyses    RelocationAnalysis[]
-  mentorOutreaches      MentorOutreach[]
-  toxicWorkplaces       ToxicWorkplaceEscape[]
-  freelanceRates        FreelanceRate[]
-  ikigaiDiscoveries     IkigaiDiscovery[]
-  performanceReviews    PerformanceReview[]
-  imposterSyndromes     ImposterSyndrome[]
-  managerReadmes        ManagerReadme[]
-  skillGapAnalyses      SkillGapAnalysis[]
-  founderReadinesses    FounderReadiness[]
-  executivePresences    ExecutivePresence[]
+  githubAnalyses       GithubAnalysis[]
+  networkingEmails     NetworkingEmail[]
+  projectIdeas         ProjectIdea[]
+  resumeGenerations    ResumeGeneration[]
+  starStories          StarStory[]
+  recruiterEmails      RecruiterEmail[]
+  interviewCheatSheets InterviewCheatSheet[]
+  linkedinPosts        LinkedInPost[]
+  offerComparisons     OfferComparison[]
+  careerPivots         CareerPivot[]
+  onboardingPlans      OnboardingPlan[]
+  resignationLetters   ResignationLetter[]
+  promotionStrategies  PromotionStrategy[]
+  freelanceProposals   FreelanceProposal[]
+  behavioralPreps      BehavioralPrep[]
+  layoffStrategies     LayoffStrategy[]
+  coffeeChatSessions   CoffeeChatSession[]
+  equityAnalyses       EquityAnalysis[]
+  assignmentGrades     AssignmentGrade[]
+  burnoutAssessments   BurnoutAssessment[]
+  sideHustleIdeas      SideHustleIdea[]
+  remoteWorkPitches    RemoteWorkPitch[]
+  internalTransfers    InternalTransfer[]
+  careerBreakPlans     CareerBreakPlan[]
+  visaStrategies       VisaStrategy[]
+  relocationAnalyses   RelocationAnalysis[]
+  mentorOutreaches     MentorOutreach[]
+  toxicWorkplaces      ToxicWorkplaceEscape[]
+  freelanceRates       FreelanceRate[]
+  ikigaiDiscoveries    IkigaiDiscovery[]
+  performanceReviews   PerformanceReview[]
+  imposterSyndromes    ImposterSyndrome[]
+  managerReadmes       ManagerReadme[]
+  skillGapAnalyses     SkillGapAnalysis[]
+  founderReadinesses   FounderReadiness[]
+  executivePresences   ExecutivePresence[]
 
   exportRecords       ExportRecord[]
   auditLogs           AuditLog[]
@@ -336,6 +337,18 @@ model LinkedInOptimization {
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   profileContent String   @db.Text
+  analysis       Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model GithubAnalysis {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  githubUrl      String?  @db.Text
+  profileContent String?  @db.Text
   analysis       Json
   createdAt      DateTime @default(now())
 

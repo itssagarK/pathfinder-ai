@@ -58,6 +58,10 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/rate-limit-actions", () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  formatResetTime: vi.fn(),
+}));
 process.env.GEMINI_API_KEY = "dummy-api-key";
 
 import { analyzeATS } from "../actions/ats.js";
@@ -65,6 +69,8 @@ import { analyzeATS } from "../actions/ats.js";
 describe("analyzeATS", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.GEMINI_API_KEY = "dummy-api-key";
+    mocks.checkRateLimit.mockResolvedValue({ allowed: true });
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
     mocks.formatResetTime.mockReturnValue("10m");
   });
@@ -79,7 +85,6 @@ describe("analyzeATS", () => {
 
     mocks.auth.mockResolvedValue({ userId: "user-1" });
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
-    mocks.findUnique.mockResolvedValue({ id: "db-user-1", clerkUserId: "user-1" });
     mocks.findUniqueUser.mockResolvedValue({ id: "db-user-1", clerkUserId: "user-1" });
     mocks.aiRateLimitUpsert.mockResolvedValue({ count: 1 });
     mocks.generateCacheKey.mockReturnValue("ats:test-key");
@@ -108,6 +113,7 @@ describe("analyzeATS", () => {
     expect(result.success).toBe(true);
     expect(mocks.generateCacheKey).toHaveBeenCalledWith(
       "ats",
+      "user-1",
       rawParams.resumeContent,
       rawParams.jobDescription,
       rawParams.jobTitle,

@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 import { createErrorResponse } from "@/lib/action-errors";
 
 import { db } from "@/lib/prisma";
@@ -58,9 +59,8 @@ Experiences:
 ${(profileData.experiences || []).map(exp => `- ${exp.title} at ${exp.company}\n  ${exp.description || ''}`).join('\n')}
       `.trim();
     } catch (err) {
-      console.error("Proxycurl API Error:", err);
-      return { success: false, errors: { _form: ["Failed to fetch LinkedIn profile from URL."] } };
-    }
+    return handleServerError(err, "linkedin");
+  }
   }
 
   if (!profileContent || profileContent.trim().length < 50) {
@@ -103,12 +103,11 @@ ${(profileData.experiences || []).map(exp => `- ${exp.title} at ${exp.company}\n
     revalidatePath("/linkedin-optimizer");
     return { success: true, data: record };
   } catch (error) {
-    console.error("LinkedIn Optimization Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to generate optimization"] } };
+    return handleServerError(error, "linkedin");
   }
 }
 
-export async function getLinkedInOptimizations() {
+export async function getLinkedInOptimizations({ take = 10, skip = 0 } = {}) {
   const { userId } = await auth();
   if (!userId) return { success: false, data: [] };
 
@@ -120,6 +119,8 @@ export async function getLinkedInOptimizations() {
   const records = await db.linkedInOptimization.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    take,
+    skip,
   });
 
   return { success: true, data: records };

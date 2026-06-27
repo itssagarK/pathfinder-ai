@@ -1,7 +1,7 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import { db } from "@/lib/prisma";
-import { userExists } from "@/lib/user-guards";
 import { auth } from "@clerk/nextjs/server";
 import { createErrorResponse } from "@/lib/action-errors";
 import { revalidatePath } from "next/cache";
@@ -58,8 +58,7 @@ export async function planCareerBreak(duration, reason, returnGoals) {
     revalidatePath("/career-break");
     return { success: true, data: record };
   } catch (error) {
-    console.error("Career Break Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to generate plan"] } };
+    return handleServerError(error, "career-break");
   }
 }
 /** Retrieve all career break plans for the current user. */
