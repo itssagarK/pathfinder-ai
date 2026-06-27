@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import { auth } from "@clerk/nextjs/server";
 import { generateGeminiContent } from "@/lib/gemini";
@@ -64,7 +65,6 @@ export async function parseJobUrl(url) {
       data: parsed
     };
   } catch (error) {
-    console.error("Job URL Parse Error:", error);
-    return { success: false, errors: { _form: ["Failed to parse the job URL. The site might be blocking scrapers or the URL is invalid."] } };
+    return handleServerError(error, "job-scraper");
   }
 }

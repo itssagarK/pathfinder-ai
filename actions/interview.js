@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import crypto from "crypto";
 import { db } from "@/lib/prisma";
@@ -580,11 +581,8 @@ Return ONLY a valid JSON object matching this schema. Do not output any markdown
       questions = quizValidation.data.questions.slice(0, 10);
       isFallback = false;
     } catch (error) {
-      console.error("AI Quiz generation failed, using fallback questions:", error);
-      const industryId = user.industry?.split("-")[0]?.toLowerCase() || "tech";
-      questions = FallbackQuizPool[industryId] || TECH_FALLBACK_QUESTIONS;
-      isFallback = true;
-    }
+    return handleServerError(error, "interview");
+  }
 
     const sessionId = crypto.randomUUID();
     const cacheStore = getCacheStore();
@@ -594,14 +592,7 @@ Return ONLY a valid JSON object matching this schema. Do not output any markdown
     return { sessionId, questions };
     return { sessionId, questions, isFallback };
   } catch (error) {
-    console.error("Quiz generation top-level error:", error);
-    if (process.env.NODE_ENV === "test") {
-      throw error;
-    }
-    return {
-      success: false,
-      error: error.message || "Failed to generate quiz."
-    };
+    return handleServerError(error, "interview");
   }
 }
 
@@ -718,10 +709,8 @@ export async function saveQuizResult(sessionIdOrQuestions, answers, category = "
         const tipResult = await generateGeminiContent(tipPrompt);
         improvementTip = tipResult.response.text().trim();
       } catch (e) {
-        console.error("Failed to generate custom AI improvement tip:", e);
-        const industryText = user.industry ? `in ${user.industry.toLowerCase()}` : "in your field";
-        improvementTip = `Focus on reviewing core ${category.toLowerCase()} concepts and typical industry practices ${industryText} to strengthen your skills.`;
-      }
+    return handleServerError(e, "interview");
+  }
     }
 
     const assessment = await db.assessment.create({
@@ -736,14 +725,7 @@ export async function saveQuizResult(sessionIdOrQuestions, answers, category = "
 
     return assessment;
   } catch (error) {
-    console.error("Error saving assessment to database:", error);
-    if (process.env.NODE_ENV === "test") {
-      throw error;
-    }
-    return {
-      success: false,
-      error: error.message || "Failed to save quiz results."
-    };
+    return handleServerError(error, "interview");
   }
 }
 
@@ -767,8 +749,7 @@ export async function getAssessments() {
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
-    console.error("Error fetching assessments:", error);
-    return [];
+    return handleServerError(error, "interview");
   }
 }
 
@@ -792,8 +773,7 @@ export async function getAssessment(id) {
       },
     });
   } catch (error) {
-    console.error("Error fetching assessment:", error);
-    return null;
+    return handleServerError(error, "interview");
   }
 }
 
@@ -833,8 +813,7 @@ export async function evaluateVoiceAnswer(question, transcribedAnswer) {
     }
     return { success: true, data: validation.data };
   } catch (error) {
-    console.error("Voice evaluation error:", error);
-    return { success: false, error: "Failed to evaluate answer." };
+    return handleServerError(error, "interview");
   }
 }
 
@@ -879,7 +858,6 @@ export async function evaluateVideoAnswer(question, transcribedAnswer, metrics) 
     }
     return { success: true, data: validation.data };
   } catch (error) {
-    console.error("Video evaluation error:", error);
-    return { success: false, error: "Failed to evaluate video answer." };
+    return handleServerError(error, "interview");
   }
 }

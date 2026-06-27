@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 import { createErrorResponse } from "@/lib/action-errors";
 
 import { db } from "@/lib/prisma";
@@ -57,8 +58,7 @@ export async function calculateRate(skills, experience, targetIncome) {
     revalidatePath("/freelance-rate");
     return { success: true, data: record };
   } catch (error) {
-    console.error("Freelance Rate Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to calculate rate"] } };
+    return handleServerError(error, "freelance-rate");
   }
 }
 

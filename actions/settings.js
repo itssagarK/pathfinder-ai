@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import { db } from "@/lib/prisma";
 import { getUserByClerkId } from "@/lib/user";
@@ -53,8 +54,7 @@ export async function getUserSettings() {
 
     return normalizeSettings(settings);
   } catch (error) {
-    console.error("[Settings Action] Error in getUserSettings:", error.message);
-    return normalizeSettings(null);
+    return handleServerError(error, "settings");
   }
 }
 
@@ -88,14 +88,7 @@ export async function updateUserSettings(data) {
     revalidatePath("/settings");
     return { success: true, settings: normalizeSettings(settings) };
   } catch (error) {
-    console.error("[Settings Action] Error in updateUserSettings:", error.message);
-    if (process.env.NODE_ENV === "test") {
-      throw error;
-    }
-    return {
-      success: false,
-      error: "Failed to update settings. Please ensure database migrations are applied."
-    };
+    return handleServerError(error, "settings");
   }
 }
 
@@ -129,13 +122,6 @@ export async function updateAccessibilitySettings(data) {
     revalidatePath("/settings");
     return { success: true, settings: normalizeSettings(settings) };
   } catch (error) {
-    console.error("[Settings Action] Error in updateAccessibilitySettings:", error.message);
-    if (process.env.NODE_ENV === "test") {
-      throw error;
-    }
-    return {
-      success: false,
-      error: "Failed to update accessibility settings."
-    };
+    return handleServerError(error, "settings");
   }
 }

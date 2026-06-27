@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 
 import { db } from "@/lib/prisma";
 import { buildUserLookup } from "@/lib/user-query";
@@ -63,8 +64,7 @@ export async function gradeAssignment(promptText, solutionText) {
     revalidatePath("/assignment-grader");
     return { success: true, data: record };
   } catch (error) {
-    console.error("Assignment Grader Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to grade assignment"] } };
+    return handleServerError(error, "assignment");
   }
 /** Retrieve all graded assignments for the current user. */
 }
