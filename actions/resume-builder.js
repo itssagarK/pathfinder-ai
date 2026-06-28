@@ -120,16 +120,12 @@ export async function getResumeHistory() {
   try {
     const user = await getHistoryUserContext();
 
-    console.log("User:", user);
-
     if (!user) return EMPTY_HISTORY_RESPONSE;
 
     const records = await db.resumeGeneration.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
     });
-
-    console.log("Records:", records);
 
     return { success: true, data: records };
   } catch (error) {
