@@ -43,7 +43,9 @@ export async function updateUser(data) {
       precomputedInsights = await generateAIInsights(profileData.industry);
     }
   } catch (e) {
-    return handleServerError(e, "user");
+    // If AI generation fails, we'll create a placeholder in the transaction
+    console.error("Failed to generate AI insights, will create placeholder:", e);
+    precomputedInsights = null;
   }
 
   try {

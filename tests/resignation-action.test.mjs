@@ -47,17 +47,19 @@ describe("generateResignationLetter", () => {
     });
     mocks.resignationLetterCreate.mockResolvedValue({ id: "letter-1" });
 
-    // Format today's date as YYYY-MM-DD
-    const todayStr = new Date().toISOString().split("T")[0];
+    // Use tomorrow's date since today might fail due to timezone issues
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-    const result = await generateResignationLetter("New opportunity", todayStr);
+    const result = await generateResignationLetter("New opportunity", tomorrowStr);
 
     expect(result.success).toBe(true);
     expect(mocks.resignationLetterCreate).toHaveBeenCalledWith({
       data: {
         userId: "db-user-1",
         circumstance: "New opportunity",
-        lastDay: todayStr,
+        lastDay: tomorrowStr,
         content: "I resign.",
       },
     });

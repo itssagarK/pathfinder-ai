@@ -89,7 +89,6 @@ describe("saveQuizResult", () => {
 
     actionMocks.cacheGet.mockResolvedValue(questions);
 
-    const result = await saveQuizResult("test-session-123", answers, "Technical");
     const result = await saveQuizResult(sessionId, answers, "Technical");
 
     expect(actionMocks.auth).toHaveBeenCalled();
