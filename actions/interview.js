@@ -482,26 +482,29 @@ const FallbackQuizPool = {
 };
 
 /**
- * Returns an array of question strings for the voice/video coach.
- * For non-English locales that have translations, returns the localized
- * question(s) to keep speech recognition and displayed prompt in sync.
- * For English (default), selects from the industry-specific fallback pool.
+ * Returns an array of question strings for the voice/video coach,
+ * selected from the industry-specific fallback pool.
+ * For non-English locales with a translated question, that translation is
+ * prepended to the pool so localization is a layer on top rather than
+ * replacing the industry-matched questions.
  */
 export async function getCoachQuestions(locale = "en") {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-
-  if (locale !== "en" && translations[locale]?.interviewQuestion) {
-    return [translations[locale].interviewQuestion];
-  }
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
     select: { industry: true },
   });
   const key = user?.industry?.toLowerCase() || "tech";
-  const pool = FallbackQuizPool[key] || TECH_FALLBACK_QUESTIONS;
-  return pool.map((q) => q.question);
+  const pool = (FallbackQuizPool[key] || TECH_FALLBACK_QUESTIONS).map((q) => q.question);
+
+  if (locale !== "en" && translations[locale]?.interviewQuestion) {
+    const localized = translations[locale].interviewQuestion;
+    return [localized, ...pool.filter((q) => q !== localized)];
+  }
+
+  return pool;
 }
 
 /**
