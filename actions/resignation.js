@@ -7,10 +7,21 @@ import { revalidatePath } from "next/cache";
 import { buildSecurePrompt } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { buildUserProfileContext } from "@/lib/ai-context";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 
 export async function generateResignationLetter(circumstance, lastDay) {
   const { userId } = await auth();
   if (!userId) return { success: false, errors: { _form: ["Unauthorized"] } };
+
+  const limit = await checkRateLimit(userId, "resignation");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Resignation letter generation limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   if (!circumstance || !lastDay) {
     return { success: false, errors: { _form: ["Circumstance and Last Day are required."] } };
