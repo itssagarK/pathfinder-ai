@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { getCurrentUser } from "@/lib/current-user";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 
 export async function generateMentorPlan(goals, targetIndustry) {
   const { userId } = await auth();
@@ -15,6 +16,16 @@ export async function generateMentorPlan(goals, targetIndustry) {
 
   const user = await getAuthenticatedUser(userId);
   if (!user) return createErrorResponse("User not found");
+
+  const limit = await checkRateLimit(userId, "mentor");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Mentor plan generation limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   if (!goals || !targetIndustry) {
     return { success: false, errors: { _form: ["Goals and target industry are required."] } };
