@@ -88,16 +88,10 @@ ${(profileData.experiences || []).map(exp => `- ${exp.title} at ${exp.company}\n
 }`,
   });
 
-  try {
+ try {
   const aiResult = await generateGeminiContent(prompt);
 
-  console.log("Gemini Response:");
-  console.log(aiResult.response.text());
-
   const parsedData = parseAIJson(aiResult.response.text());
-
-  console.log("Parsed JSON:");
-  console.log(parsedData);
 
   const record = await db.linkedInOptimization.create({
     data: {
@@ -108,15 +102,12 @@ ${(profileData.experiences || []).map(exp => `- ${exp.title} at ${exp.company}\n
   });
 
   revalidatePath("/linkedin-optimizer");
+
   return {
     success: true,
     data: record,
   };
 } catch (error) {
-  console.error("=========== LINKEDIN ERROR ===========");
-  console.error(error);
-  console.error(error.stack);
-
   return handleServerError(error, "linkedin");
 }
 }
