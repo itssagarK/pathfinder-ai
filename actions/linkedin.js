@@ -88,25 +88,29 @@ ${(profileData.experiences || []).map(exp => `- ${exp.title} at ${exp.company}\n
 }`,
   });
 
-  try {
-    const aiResult = await generateGeminiContent(prompt);
-    const parsedData = parseAIJson(aiResult.response.text());
+ try {
+  const aiResult = await generateGeminiContent(prompt);
 
-    const record = await db.linkedInOptimization.create({
-      data: {
-        userId: user.id,
-        profileContent: profileContent,
-        analysis: parsedData,
-      },
-    });
+  const parsedData = parseAIJson(aiResult.response.text());
 
-    revalidatePath("/linkedin-optimizer");
-    return { success: true, data: record };
-  } catch (error) {
-    return handleServerError(error, "linkedin");
-  }
+  const record = await db.linkedInOptimization.create({
+    data: {
+      userId: user.id,
+      profileContent,
+      analysis: parsedData,
+    },
+  });
+
+  revalidatePath("/linkedin-optimizer");
+
+  return {
+    success: true,
+    data: record,
+  };
+} catch (error) {
+  return handleServerError(error, "linkedin");
 }
-
+}
 export async function getLinkedInOptimizations({ take = 10, skip = 0 } = {}) {
   const { userId } = await auth();
   if (!userId) return { success: false, data: [] };
