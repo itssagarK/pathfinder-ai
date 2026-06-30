@@ -1,6 +1,7 @@
 "use server";
 import { handleServerError } from "@/lib/error-handler";
 import { runAiGeneration } from "@/lib/ai-pipeline";
+import { getUserHistory } from "@/lib/history-query";
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
@@ -75,10 +76,11 @@ export async function getCareerPivots() {
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return { success: false, data: [] };
 
-  const records = await db.careerPivot.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const records = await getUserHistory(
+  db.careerPivot,
+  user.id,
+  { createdAt: "desc" }
+);
 
   return { success: true, data: records };
 }

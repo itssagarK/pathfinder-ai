@@ -1,6 +1,7 @@
 "use server";
 import { handleServerError } from "@/lib/error-handler";
 import { runAiGeneration } from "@/lib/ai-pipeline";
+import { getUserHistory } from "@/lib/history-query";
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { createErrorResponse } from "@/lib/action-errors";
@@ -70,10 +71,11 @@ export async function getCareerBreakPlans() {
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return { success: false, data: [] };
 
-  const records = await db.careerBreakPlan.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const records = await getUserHistory(
+  db.careerBreakPlan,
+  user.id,
+  { createdAt: "desc" }
+);
 
   return { success: true, data: records };
 }
