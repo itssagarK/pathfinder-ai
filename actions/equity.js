@@ -6,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 
 export async function decodeEquityOffer(offerDetails) {
   const { userId } = await auth();
@@ -13,6 +14,16 @@ export async function decodeEquityOffer(offerDetails) {
 
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return createErrorResponse("User not found");
+
+  const limit = await checkRateLimit(userId, "equity");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Equity decoding limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   if (!offerDetails || !offerDetails.equityType) {
     return { success: false, errors: { _form: ["Equity details are required."] } };
