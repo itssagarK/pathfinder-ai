@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { buildSecurePrompt } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { buildUserProfileContext } from "@/lib/ai-context";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 
 export async function generateProposal(projectDetails, rate) {
   const { userId } = await auth();
@@ -20,6 +21,16 @@ export async function generateProposal(projectDetails, rate) {
     where: { clerkUserId: userId },
   });
   if (!user) return createErrorResponse("User not found");
+
+  const limit = await checkRateLimit(userId, "freelance");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Freelance proposal generation limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   const prompt = buildSecurePrompt({
     context: buildUserProfileContext(user) + "\nYou are an expert freelance consultant and sales copywriter.",
