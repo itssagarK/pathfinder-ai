@@ -12,6 +12,7 @@ import { getAuthenticatedUserId } from "@/lib/auth-userid";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { UNAUTHORIZED_RESPONSE } from "@/lib/auth-errors";
+import { parseAiOutput } from "@/lib/ai-output";
 
 /** Generate a career pivot strategy based on user goals. */
 export async function generatePivotStrategy(currentRole, targetRole) {
