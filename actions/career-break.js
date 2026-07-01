@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { getAuthenticatedUserId } from "@/lib/auth-userid";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 import { UNAUTHORIZED_RESPONSE } from "@/lib/auth-errors";
 
 /** Generate a career break plan based on user preferences. */
@@ -17,6 +18,16 @@ export async function planCareerBreak(duration, reason, returnGoals) {
 
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return createErrorResponse("User not found");
+
+  const limit = await checkRateLimit(userId, "careerBreak");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Career break plan generation limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   if (!duration || !reason || !returnGoals) {
     return { success: false, errors: { _form: ["Duration, reason, and return goals are required."] } };
