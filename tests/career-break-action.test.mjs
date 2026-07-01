@@ -53,6 +53,10 @@ describe("planCareerBreak", () => {
   it("successfully generates plan when within rate limits", async () => {
     mocks.getAuthenticatedUserId.mockResolvedValue("user-1");
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
+  });
+
+  it("successfully generates a career break plan", async () => {
+    mocks.getAuthenticatedUserId.mockResolvedValue("user-1");
     mocks.findUniqueUser.mockResolvedValue({ id: "db-user-1", clerkUserId: "user-1" });
     mocks.generateGeminiContent.mockResolvedValue({
       response: {
@@ -61,6 +65,11 @@ describe("planCareerBreak", () => {
           upskillingRecommendations: [],
           reentryStrategy: "Reentry",
           positioningStatement: "Statement",
+          handoffPlan: ["Handoff 1"],
+          stayingRelevant: ["Learn 1"],
+          resumeExplanation: "Took a gap year.",
+          linkedinHeadline: "Headline",
+          interviewScript: "Gap explanation",
         }),
       },
     });
@@ -83,5 +92,10 @@ describe("planCareerBreak", () => {
     expect(result.success).toBe(false);
     expect(result.errors._form[0]).toContain("limit reached");
     expect(mocks.careerBreakPlanCreate).not.toHaveBeenCalled();
+  });
+    const result = await planCareerBreak("6 months", "Parental leave", "Return to Tech");
+
+    expect(result.success).toBe(true);
+    expect(mocks.careerBreakPlanCreate).toHaveBeenCalled();
   });
 });
