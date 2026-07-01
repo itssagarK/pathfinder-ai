@@ -1,4 +1,5 @@
 "use server";
+import { handleServerError } from "@/lib/error-handler";
 import { createErrorResponse } from "@/lib/action-errors";
 
 import { db } from "@/lib/prisma";
@@ -9,7 +10,6 @@ import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
 import { getCurrentUser } from "@/lib/current-user";
 import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
-
 export async function generateMentorPlan(goals, targetIndustry) {
   const { userId } = await auth();
   if (!userId) return { success: false, errors: { _form: ["Unauthorized"] } };
@@ -71,8 +71,7 @@ export async function generateMentorPlan(goals, targetIndustry) {
     revalidatePath("/mentor-matcher");
     return { success: true, data: record };
   } catch (error) {
-    console.error("Mentor Plan Error:", error);
-    return { success: false, errors: { _form: [error.message || "Failed to generate mentor plan"] } };
+    return handleServerError(error, "mentor");
   }
 }
 
