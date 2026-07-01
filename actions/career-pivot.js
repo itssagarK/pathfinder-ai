@@ -9,6 +9,7 @@ import { USER_NOT_FOUND_MESSAGE } from "@/lib/errors";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { userExists } from "@/lib/user-guards";
 import { generateGeminiContent } from "@/lib/gemini";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 import { UNAUTHORIZED_RESPONSE } from "@/lib/auth-errors";
 
 /** Generate a career pivot strategy based on user goals. */
@@ -18,6 +19,16 @@ export async function generatePivotStrategy(currentRole, targetRole) {
 
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return createErrorResponse("User not found");
+
+  const limit = await checkRateLimit(userId, "careerPivot");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Career pivot strategy generation limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   if (!currentRole || !targetRole) {
     return { success: false, errors: { _form: ["Both current and target roles are required."] } };
