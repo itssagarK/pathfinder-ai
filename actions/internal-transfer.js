@@ -6,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { buildSecurePrompt, parseAIJson } from "@/lib/prompt-safety";
 import { generateGeminiContent } from "@/lib/gemini";
+import { checkRateLimit, formatResetTime } from "@/lib/rate-limit-actions";
 
 export async function generateTransferStrategy(currentRole, targetRole, reasons) {
   const { userId } = await auth();
@@ -13,6 +14,16 @@ export async function generateTransferStrategy(currentRole, targetRole, reasons)
 
   const user = await db.user.findUnique({ where: { clerkUserId: userId } });
   if (!user) return createErrorResponse("User not found");
+
+  const limit = await checkRateLimit(userId, "internalTransfer");
+  if (!limit.allowed) {
+    return {
+      success: false,
+      errors: {
+        _form: [`Internal transfer strategy generation limit reached. Resets in ${formatResetTime(limit.resetAt)}.`],
+      },
+    };
+  }
 
   if (!currentRole || !targetRole || !reasons) {
     return { success: false, errors: { _form: ["Current role, target role, and reasons are required."] } };
