@@ -53,6 +53,10 @@ describe("generatePivotStrategy", () => {
   it("successfully generates strategy when within rate limits", async () => {
     mocks.getAuthenticatedUserId.mockResolvedValue("user-1");
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
+  });
+
+  it("successfully generates a career pivot plan", async () => {
+    mocks.getAuthenticatedUserId.mockResolvedValue("user-1");
     mocks.findUniqueUser.mockResolvedValue({ id: "db-user-1", clerkUserId: "user-1" });
     mocks.generateGeminiContent.mockResolvedValue({
       response: {
@@ -60,6 +64,9 @@ describe("generatePivotStrategy", () => {
           transferableSkills: [],
           skillGaps: [],
           roadmap: [],
+          transferableSkills: ["Skill 1"],
+          skillGaps: ["Gap 1"],
+          roadmap: [{ step: "Phase 1", action: "Action 1" }],
         }),
       },
     });
@@ -82,5 +89,7 @@ describe("generatePivotStrategy", () => {
     expect(result.success).toBe(false);
     expect(result.errors._form[0]).toContain("limit reached");
     expect(mocks.careerPivotCreate).not.toHaveBeenCalled();
+  });
+    expect(mocks.careerPivotCreate).toHaveBeenCalled();
   });
 });
