@@ -74,7 +74,7 @@ export async function planCareerBreak(duration, reason, returnGoals) {
 });
 
     revalidatePath("/career-break");
-    return createHistoryResponse(records);
+    return createHistoryResponse(record);
   } catch (error) {
     return handleServerError(error, "career-break");
   }

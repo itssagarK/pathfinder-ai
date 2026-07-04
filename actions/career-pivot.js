@@ -88,15 +88,10 @@ export async function getCareerPivots() {
   if (!user) return { success: false, data: [] };
 
   const records = await getUserHistory(
-  db.careerPivot,
-  user.id,
-  { createdAt: "desc" }
-);
+    db.careerPivot,
+    user.id,
+    { createdAt: "desc" }
+  );
 
   return createHistoryResponse(records);
-  return loadHistory(async () => {
-  const records = await db.careerBreakPlan.findMany(...);
-
-  return { success: true, data: records };
-});
 }

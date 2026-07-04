@@ -79,6 +79,11 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/rate-limit-actions", () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  formatResetTime: vi.fn().mockReturnValue("60 minutes"),
+}));
+
 describe("reframeThoughts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
