@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   findUniqueUser: vi.fn(),
   resignationLetterCreate: vi.fn(),
   generateGeminiContent: vi.fn(),
+  checkRateLimit: vi.fn(),
+  formatResetTime: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -30,11 +32,18 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/rate-limit-actions", () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  formatResetTime: mocks.formatResetTime,
+}));
+
 import { generateResignationLetter } from "../actions/resignation.js";
 
 describe("generateResignationLetter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.checkRateLimit.mockResolvedValue({ allowed: true });
+    mocks.formatResetTime.mockReturnValue("60 minutes");
   });
 
   it("succeeds when resignation date is today's date", async () => {
@@ -95,5 +104,19 @@ describe("generateResignationLetter", () => {
 
     expect(result.success).toBe(false);
     expect(result.errors._form).toContain("Last Day must be a future date.");
+  });
+
+  it("fails when rate limit is exceeded", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user-1" });
+    mocks.checkRateLimit.mockResolvedValue({ allowed: false, resetAt: new Date() });
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+    const result = await generateResignationLetter("New opportunity", tomorrowStr);
+
+    expect(result.success).toBe(false);
+    expect(result.errors._form[0]).toContain("limit reached");
   });
 });
